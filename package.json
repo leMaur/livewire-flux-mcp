@@ -1,0 +1,22 @@
+{
+  "name": "livewire-flux-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Livewire Flux Components documentation",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "livewire-flux-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["mcp", "livewire", "flux", "documentation"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "cheerio": "^1.0.0",
+    "node-fetch": "^3.3.2"
+  }
+}
