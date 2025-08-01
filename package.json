@@ -9,11 +9,21 @@
   },
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "docker:build": "docker build -t livewire-flux-mcp .",
+    "docker:run": "docker run -p 3000:3000 livewire-flux-mcp"
   },
   "keywords": ["mcp", "livewire", "flux", "documentation"],
-  "author": "",
+  "author": "lemaur",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lemaur/livewire-flux-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lemaur/livewire-flux-mcp/issues"
+  },
+  "homepage": "https://github.com/lemaur/livewire-flux-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.4.0",
     "cheerio": "^1.0.0",
