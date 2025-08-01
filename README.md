@@ -2,6 +2,19 @@
 
 An MCP (Model Context Protocol) server that provides access to Livewire Flux Components documentation from [fluxui.dev](https://fluxui.dev/docs/). This server allows AI assistants to fetch and search through Flux component documentation on demand.
 
+## Support Me
+
+Hey folks,
+
+Do you like this package? Do you find it useful, and it fits well in your project?
+
+I am glad to help you, and I would be so grateful if you considered supporting my work.
+
+You can even choose 😃:
+* You can [sponsor me 😎](https://github.com/sponsors/leMaur) with a monthly subscription.
+* You can [buy me a coffee ☕ or a pizza 🍕](https://github.com/sponsors/leMaur?frequency=one-time&sponsor=leMaur) just for this package.
+* You can "Star ⭐" this repository (it's free 😉).
+
 ## What it does
 
 This MCP server scrapes and provides structured access to the Livewire Flux documentation, enabling AI assistants to:
