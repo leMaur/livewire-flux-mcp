@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 1.1.1 - 2025-08-02
+
+### What's Changed
+
+* Add Heroicons information to flux icon component documentation by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/5
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/1.1.0...1.1.1
+
 ## 1.1.0 - 2025-08-02
 
 ### What's Changed
