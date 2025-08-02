@@ -142,10 +142,19 @@ class FluxDocumentationServer {
         }
       }
 
-      // Combine main content with reference section
+      // Add Heroicons information for icon component
+      let heroiconsInfo = '';
+      if (component === 'icon') {
+        heroiconsInfo = `\n\n--- HEROICONS INFORMATION ---\n\nThe Flux icon component relies on Heroicons. Here are the GitHub folders containing all available icons for each variant:\n\n• Default variant (24px outline): https://github.com/tailwindlabs/heroicons/tree/master/optimized/24/outline\n  Usage: <flux:icon.bolt />\n\n• Solid variant (24px solid): https://github.com/tailwindlabs/heroicons/tree/master/optimized/24/solid\n  Usage: <flux:icon.bolt variant="solid" />\n\n• Mini variant (20px solid): https://github.com/tailwindlabs/heroicons/tree/master/optimized/20/solid\n  Usage: <flux:icon.bolt variant="mini" />\n\n• Micro variant (16px solid): https://github.com/tailwindlabs/heroicons/tree/master/optimized/16/solid\n  Usage: <flux:icon.bolt variant="micro" />`;
+      }
+
+      // Combine main content with reference section and heroicons info
       let combinedText = text;
       if (referenceText) {
         combinedText = `${text}\n\n--- REFERENCE SECTION ---\n\n${referenceText}`;
+      }
+      if (heroiconsInfo) {
+        combinedText += heroiconsInfo;
       }
 
       // If search term is provided, filter content
