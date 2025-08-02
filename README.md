@@ -1,6 +1,8 @@
 # Livewire Flux MCP
 
-An MCP (Model Context Protocol) server that provides access to Livewire Flux Components documentation from [fluxui.dev](https://fluxui.dev/components/). This server allows AI assistants to fetch and search through Flux component documentation on demand.
+[![CodeQL](https://github.com/leMaur/livewire-flux-mcp/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/leMaur/livewire-flux-mcp/actions/workflows/github-code-scanning/codeql)
+
+An MCP (Model Context Protocol) server that provides access to Livewire Flux Components from [fluxui.dev](https://fluxui.dev/components/). This server allows AI assistants to fetch and search through Flux component documentation on demand.
 
 ## Support Me
 
@@ -11,9 +13,9 @@ Do you like this package? Do you find it useful, and it fits well in your projec
 I am glad to help you, and I would be so grateful if you considered supporting my work.
 
 You can even choose 😃:
-* You can [sponsor me 😎](https://github.com/sponsors/leMaur) with a monthly subscription.
-* You can [buy me a coffee ☕ or a pizza 🍕](https://github.com/sponsors/leMaur?frequency=one-time&sponsor=leMaur) just for this package.
-* You can "Star ⭐" this repository (it's free 😉).
+* You can [sponsor me 😎](https://github.com/sponsors/leMaur)
+* You can [buy me a coffee ☕ or a pizza 🍕](https://github.com/sponsors/leMaur?frequency=one-time&sponsor=leMaur)
+* You can "Star ⭐" this repository (it's free BTW 😉)
 
 ## What it does
 
