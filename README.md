@@ -25,6 +25,7 @@ This MCP server scrapes and provides structured access to the Livewire Flux docu
 - Access component reference sections with API details, props, and usage patterns
 - Search through component documentation content
 - List all available Flux components
+- Browse and search all available Heroicons for use with flux:icon component
 - Access up-to-date documentation directly from the official Flux website
 
 ## How to use it
@@ -94,7 +95,7 @@ docker run --rm livewire-flux-mcp npm start
 
 ### Available MCP Tools
 
-The server provides two MCP tools:
+The server provides three MCP tools:
 
 1. **`fetch_flux_docs`** - Fetches documentation for components
    - `component` (optional): Specific component name to fetch docs for
@@ -107,6 +108,13 @@ The server provides two MCP tools:
    - Returns components with `https://fluxui.dev/components/` prefix
    - Provides component names and their documentation paths
 
+3. **`list_flux_component_icons`** - Lists all available Heroicons for flux:icon component
+   - `variant` (optional): Filter by icon variant (`outline`, `solid`, `mini`, `micro`)
+   - `search` (optional): Search term to filter icon names
+   - Fetches actual icon names from Heroicons GitHub repository
+   - Provides usage examples, dimensions, and GitHub links for each variant
+   - Returns comprehensive list of all available icons with proper Flux syntax
+
 ### Example Usage
 
 Once the MCP server is running, AI assistants can use it to:
@@ -114,8 +122,11 @@ Once the MCP server is running, AI assistants can use it to:
 - Get documentation for a specific component: "Show me the Button component docs"
 - Search for content: "Find all components related to forms"
 - List available components: "What Flux components are available?"
+- Browse all available icons: "Show me all Heroicons available for flux:icon"
+- Search for specific icons: "Find all arrow icons in the outline variant"
+- Get icon usage examples: "How do I use the user icon in solid variant?"
 
-The server automatically fetches the latest documentation from fluxui.dev/components and presents it in a structured format for easy consumption by AI assistants. When fetching component documentation, it includes both the main content and the reference section with detailed API information.
+The server automatically fetches the latest documentation from fluxui.dev/components and Heroicons from GitHub, presenting everything in a structured format for easy consumption by AI assistants. When fetching component documentation, it includes both the main content and the reference section with detailed API information.
 
 ## Integration with Claude Code
 
@@ -172,6 +183,21 @@ Once added, you can use the MCP tools in your conversations:
 3. **Search documentation:**
    ```
    Use fetch_flux_docs to search for "form validation" in the Flux docs
+   ```
+
+4. **Browse all available icons:**
+   ```
+   Use list_flux_component_icons to show me all available Heroicons
+   ```
+
+5. **Search for specific icons:**
+   ```
+   Use list_flux_component_icons with search "arrow" to find arrow-related icons
+   ```
+
+6. **Filter icons by variant:**
+   ```
+   Use list_flux_component_icons with variant "solid" to show only solid icons
    ```
 
 ### Managing the Server
