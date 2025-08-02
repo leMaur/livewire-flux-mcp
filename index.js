@@ -86,7 +86,7 @@ class FluxDocumentationServer {
 
   async fetchFluxDocs(component, search) {
     try {
-      const baseUrl = 'https://fluxui.dev/docs';
+      const baseUrl = 'https://fluxui.dev/components';
       let url = baseUrl;
       
       if (component) {
@@ -112,20 +112,56 @@ class FluxDocumentationServer {
         text = $('body').text().trim();
       }
 
+      // Extract reference section if component is specified
+      let referenceText = '';
+      if (component) {
+        // Look for reference section by ID or heading
+        const referenceSection = $('#reference, h2:contains("Reference"), h3:contains("Reference")').next();
+        if (referenceSection.length > 0) {
+          referenceText = referenceSection.text().trim();
+        } else {
+          // Alternative approach: look for content after "Reference" heading
+          $('h1, h2, h3, h4').each((i, el) => {
+            const headingText = $(el).text().toLowerCase();
+            if (headingText.includes('reference')) {
+              let nextElement = $(el).next();
+              let sectionContent = '';
+              
+              // Collect content until next heading or end
+              while (nextElement.length > 0 && !nextElement.is('h1, h2, h3, h4')) {
+                sectionContent += nextElement.text().trim() + '\n';
+                nextElement = nextElement.next();
+              }
+              
+              if (sectionContent.trim()) {
+                referenceText = sectionContent.trim();
+                return false; // Break the loop
+              }
+            }
+          });
+        }
+      }
+
+      // Combine main content with reference section
+      let combinedText = text;
+      if (referenceText) {
+        combinedText = `${text}\n\n--- REFERENCE SECTION ---\n\n${referenceText}`;
+      }
+
       // If search term is provided, filter content
       if (search) {
-        const lines = text.split('\n');
+        const lines = combinedText.split('\n');
         const filteredLines = lines.filter(line => 
           line.toLowerCase().includes(search.toLowerCase())
         );
-        text = filteredLines.join('\n');
+        combinedText = filteredLines.join('\n');
       }
 
       return {
         content: [
           {
             type: 'text',
-            text: `Documentation from ${url}:\n\n${text}`,
+            text: `Documentation from ${url}:\n\n${combinedText}`,
           },
         ],
       };
@@ -144,16 +180,18 @@ class FluxDocumentationServer {
       const html = await response.text();
       const $ = cheerio.load(html);
 
-      // Look for navigation links or component links
+      // Look for component links with /components/ prefix
       const links = [];
-      $('a[href*="/docs/"]').each((i, el) => {
+      $('a').each((i, el) => {
         const href = $(el).attr('href');
         const text = $(el).text().trim();
-        if (href && text && href.includes('/docs/') && !links.some(l => l.href === href)) {
+        
+        // Filter for links that start with https://fluxui.dev/components/
+        if (href && text && href.startsWith('https://fluxui.dev/components/') && !links.some(l => l.href === href)) {
           links.push({
             name: text,
             href: href,
-            path: href.replace('/docs/', '').replace(/^\//, '')
+            path: href.replace('https://fluxui.dev/components/', '')
           });
         }
       });

@@ -1,6 +1,6 @@
 # Livewire Flux MCP
 
-An MCP (Model Context Protocol) server that provides access to Livewire Flux Components documentation from [fluxui.dev](https://fluxui.dev/docs/). This server allows AI assistants to fetch and search through Flux component documentation on demand.
+An MCP (Model Context Protocol) server that provides access to Livewire Flux Components documentation from [fluxui.dev](https://fluxui.dev/components/). This server allows AI assistants to fetch and search through Flux component documentation on demand.
 
 ## Support Me
 
@@ -19,7 +19,8 @@ You can even choose 😃:
 
 This MCP server scrapes and provides structured access to the Livewire Flux documentation, enabling AI assistants to:
 
-- Fetch documentation for specific Flux components
+- Fetch documentation for specific Flux components from `https://fluxui.dev/components/`
+- Access component reference sections with API details, props, and usage patterns
 - Search through component documentation content
 - List all available Flux components
 - Access up-to-date documentation directly from the official Flux website
@@ -96,10 +97,13 @@ The server provides two MCP tools:
 1. **`fetch_flux_docs`** - Fetches documentation for components
    - `component` (optional): Specific component name to fetch docs for
    - `search` (optional): Search term to filter content
+   - Automatically includes component reference sections when available
+   - Fetches from `https://fluxui.dev/components/{component}`
 
 2. **`list_flux_components`** - Lists all available Flux components
    - No parameters required
-   - Returns a list of components with their documentation paths
+   - Returns components with `https://fluxui.dev/components/` prefix
+   - Provides component names and their documentation paths
 
 ### Example Usage
 
@@ -109,7 +113,7 @@ Once the MCP server is running, AI assistants can use it to:
 - Search for content: "Find all components related to forms"
 - List available components: "What Flux components are available?"
 
-The server automatically fetches the latest documentation from fluxui.dev and presents it in a structured format for easy consumption by AI assistants.
+The server automatically fetches the latest documentation from fluxui.dev/components and presents it in a structured format for easy consumption by AI assistants. When fetching component documentation, it includes both the main content and the reference section with detailed API information.
 
 ## Integration with Claude Code
 
