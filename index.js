@@ -9,6 +9,36 @@ import {
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 
+class SimpleCache {
+  constructor(ttlMs = 24 * 60 * 60 * 1000) { // 24 hours default
+    this.cache = new Map();
+    this.ttl = ttlMs;
+  }
+
+  get(key) {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    
+    if (Date.now() - entry.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return entry.data;
+  }
+
+  set(key, data) {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+
 class FluxDocumentationServer {
   constructor() {
     this.server = new Server(
@@ -23,6 +53,7 @@ class FluxDocumentationServer {
       }
     );
 
+    this.cache = new SimpleCache();
     this.setupToolHandlers();
   }
 
@@ -113,6 +144,15 @@ class FluxDocumentationServer {
         url = `${baseUrl}/${component}`;
       }
 
+      // Create cache key based on URL and search parameter
+      const cacheKey = `docs:${url}:${search || ''}`;
+      
+      // Check cache first
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -177,7 +217,7 @@ class FluxDocumentationServer {
         combinedText = filteredLines.join('\n');
       }
 
-      return {
+      const result = {
         content: [
           {
             type: 'text',
@@ -185,6 +225,11 @@ class FluxDocumentationServer {
           },
         ],
       };
+
+      // Cache the result
+      this.cache.set(cacheKey, result);
+      
+      return result;
     } catch (error) {
       throw new Error(`Failed to fetch documentation: ${error.message}`);
     }
@@ -192,6 +237,14 @@ class FluxDocumentationServer {
 
   async listFluxComponents() {
     try {
+      const cacheKey = 'components:list';
+      
+      // Check cache first
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const response = await fetch('https://fluxui.dev/docs');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -220,7 +273,7 @@ class FluxDocumentationServer {
         .map(link => `- ${link.name} (${link.path})`)
         .join('\n');
 
-      return {
+      const result = {
         content: [
           {
             type: 'text',
@@ -228,6 +281,11 @@ class FluxDocumentationServer {
           },
         ],
       };
+
+      // Cache the result
+      this.cache.set(cacheKey, result);
+      
+      return result;
     } catch (error) {
       throw new Error(`Failed to list components: ${error.message}`);
     }
@@ -235,6 +293,15 @@ class FluxDocumentationServer {
 
   async listFluxComponentIcons(variant, search) {
     try {
+      // Create cache key based on variant and search parameters
+      const cacheKey = `icons:${variant || 'all'}:${search || ''}`;
+      
+      // Check cache first
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const variants = {
         outline: {
           path: '24/outline',
@@ -277,7 +344,7 @@ class FluxDocumentationServer {
         const files = await response.json();
         const iconNames = files
           .filter(file => file.name.endsWith('.svg'))
-          .map(file => file.name.replace('.svg', ''))
+          .map(file => file.name.slice(0, -4))
           .filter(name => !search || name.toLowerCase().includes(search.toLowerCase()));
 
         allIcons[variantName] = {
@@ -307,7 +374,7 @@ class FluxDocumentationServer {
         result += `\nFiltered by: "${search}"\n`;
       }
 
-      return {
+      const finalResult = {
         content: [
           {
             type: 'text',
@@ -315,6 +382,11 @@ class FluxDocumentationServer {
           },
         ],
       };
+
+      // Cache the result
+      this.cache.set(cacheKey, finalResult);
+      
+      return finalResult;
     } catch (error) {
       throw new Error(`Failed to list icons: ${error.message}`);
     }

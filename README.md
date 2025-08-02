@@ -27,6 +27,7 @@ This MCP server scrapes and provides structured access to the Livewire Flux docu
 - List all available Flux components
 - Browse and search all available Heroicons for use with flux:icon component
 - Access up-to-date documentation directly from the official Flux website
+- **High-performance caching** with 24-hour expiration for optimal response times
 
 ## How to use it
 
@@ -127,6 +128,25 @@ Once the MCP server is running, AI assistants can use it to:
 - Get icon usage examples: "How do I use the user icon in solid variant?"
 
 The server automatically fetches the latest documentation from fluxui.dev/components and Heroicons from GitHub, presenting everything in a structured format for easy consumption by AI assistants. When fetching component documentation, it includes both the main content and the reference section with detailed API information.
+
+## Performance & Caching
+
+The MCP server includes intelligent caching to provide optimal performance:
+
+- **24-hour cache expiration** - Content is cached for 1 day to balance freshness with performance
+- **Automatic cache management** - Expired entries are automatically cleaned up
+- **Intelligent cache keys** - Different cache entries for different parameters (component, search, variant)
+- **GitHub API rate limit protection** - Prevents hitting GitHub API limits when fetching Heroicons
+- **Instant responses** - Cached requests return in milliseconds instead of seconds
+
+### Cache Behavior
+
+- **Documentation requests**: Cached per component and search term combination
+- **Component listings**: Cached globally (refreshed daily)
+- **Icon listings**: Cached per variant and search combination
+- **Cache storage**: In-memory (resets when server restarts)
+
+The caching system is particularly beneficial for the `list_flux_component_icons` tool, which can make up to 4 GitHub API calls per request without caching.
 
 ## Integration with Claude Code
 
