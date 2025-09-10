@@ -5,18 +5,23 @@
   "main": "index.js",
   "type": "module",
   "bin": {
-    "livewire-flux-mcp": "./index.js"
+    "livewire-flux-mcp": "index.js"
   },
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["mcp", "livewire", "flux", "documentation"],
+  "keywords": [
+    "mcp",
+    "livewire",
+    "flux",
+    "documentation"
+  ],
   "author": "lemaur",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lemaur/livewire-flux-mcp.git"
+    "url": "git+https://github.com/lemaur/livewire-flux-mcp.git"
   },
   "bugs": {
     "url": "https://github.com/lemaur/livewire-flux-mcp/issues"
