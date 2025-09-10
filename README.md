@@ -2,7 +2,7 @@
 
 [![CodeQL](https://github.com/leMaur/livewire-flux-mcp/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/leMaur/livewire-flux-mcp/actions/workflows/github-code-scanning/codeql)
 
-An MCP (Model Context Protocol) server that provides access to Livewire Flux Components from [fluxui.dev](https://fluxui.dev/components/). This server allows AI assistants to fetch and search through Flux component documentation on demand.
+An MCP (Model Context Protocol) server that provides access to Livewire Flux Components and Layouts from [fluxui.dev](https://fluxui.dev/). This server allows AI assistants to fetch and search through Flux component and layout documentation on demand.
 
 ## Support Me
 
@@ -22,8 +22,9 @@ You can even choose 😃:
 This MCP server scrapes and provides structured access to the Livewire Flux documentation, enabling AI assistants to:
 
 - Fetch documentation for specific Flux components from `https://fluxui.dev/components/`
-- Access component reference sections with API details, props, and usage patterns
-- Search through component documentation content
+- Fetch documentation for specific Flux layouts from `https://fluxui.dev/layouts/`
+- Access component and layout reference sections with API details, props, and usage patterns
+- Search through component and layout documentation content
 - List all available Flux components
 - Browse and search all available Heroicons for use with flux:icon component
 - Access up-to-date documentation directly from the official Flux website
@@ -96,20 +97,26 @@ docker run --rm livewire-flux-mcp npm start
 
 ### Available MCP Tools
 
-The server provides three MCP tools:
+The server provides four MCP tools:
 
-1. **`fetch_flux_docs`** - Fetches documentation for components
+1. **`fetch_flux_docs`** - Fetches documentation for components or layouts
    - `component` (optional): Specific component name to fetch docs for
+   - `layout` (optional): Specific layout name to fetch docs for (e.g., "header", "sidebar")
    - `search` (optional): Search term to filter content
-   - Automatically includes component reference sections when available
-   - Fetches from `https://fluxui.dev/components/{component}`
+   - Automatically includes reference sections when available
+   - Fetches from `https://fluxui.dev/components/{component}` or `https://fluxui.dev/layouts/{layout}`
 
 2. **`list_flux_components`** - Lists all available Flux components
    - No parameters required
    - Returns components with `https://fluxui.dev/components/` prefix
    - Provides component names and their documentation paths
 
-3. **`list_flux_component_icons`** - Lists all available Heroicons for flux:icon component
+3. **`list_flux_layouts`** - Lists all available Flux layouts
+   - No parameters required
+   - Returns layouts with `https://fluxui.dev/layouts/` prefix
+   - Provides layout names and their documentation paths
+
+4. **`list_flux_component_icons`** - Lists all available Heroicons for flux:icon component
    - `variant` (optional): Filter by icon variant (`outline`, `solid`, `mini`, `micro`)
    - `search` (optional): Search term to filter icon names
    - Fetches actual icon names from Heroicons GitHub repository
@@ -121,13 +128,15 @@ The server provides three MCP tools:
 Once the MCP server is running, AI assistants can use it to:
 
 - Get documentation for a specific component: "Show me the Button component docs"
+- Get documentation for a specific layout: "Show me the header layout docs"
 - Search for content: "Find all components related to forms"
 - List available components: "What Flux components are available?"
+- List available layouts: "What Flux layouts are available?"
 - Browse all available icons: "Show me all Heroicons available for flux:icon"
 - Search for specific icons: "Find all arrow icons in the outline variant"
 - Get icon usage examples: "How do I use the user icon in solid variant?"
 
-The server automatically fetches the latest documentation from fluxui.dev/components and Heroicons from GitHub, presenting everything in a structured format for easy consumption by AI assistants. When fetching component documentation, it includes both the main content and the reference section with detailed API information.
+The server automatically fetches the latest documentation from fluxui.dev/components, fluxui.dev/layouts, and Heroicons from GitHub, presenting everything in a structured format for easy consumption by AI assistants. When fetching component or layout documentation, it includes both the main content and the reference section with detailed API information.
 
 ## Performance & Caching
 
@@ -141,8 +150,9 @@ The MCP server includes intelligent caching to provide optimal performance:
 
 ### Cache Behavior
 
-- **Documentation requests**: Cached per component and search term combination
+- **Documentation requests**: Cached per component/layout and search term combination
 - **Component listings**: Cached globally (refreshed daily)
+- **Layout listings**: Cached globally (refreshed daily)
 - **Icon listings**: Cached per variant and search combination
 - **Cache storage**: In-memory (resets when server restarts)
 
@@ -195,27 +205,37 @@ Once added, you can use the MCP tools in your conversations:
    Use the list_flux_components tool to show me all available Flux components
    ```
 
-2. **Get specific component documentation:**
+2. **List available layouts:**
+   ```
+   Use the list_flux_layouts tool to show me all available Flux layouts
+   ```
+
+3. **Get specific component documentation:**
    ```
    Use fetch_flux_docs to get documentation for the Button component
    ```
 
-3. **Search documentation:**
+4. **Get specific layout documentation:**
+   ```
+   Use fetch_flux_docs to get documentation for the header layout
+   ```
+
+5. **Search documentation:**
    ```
    Use fetch_flux_docs to search for "form validation" in the Flux docs
    ```
 
-4. **Browse all available icons:**
+6. **Browse all available icons:**
    ```
    Use list_flux_component_icons to show me all available Heroicons
    ```
 
-5. **Search for specific icons:**
+7. **Search for specific icons:**
    ```
    Use list_flux_component_icons with search "arrow" to find arrow-related icons
    ```
 
-6. **Filter icons by variant:**
+8. **Filter icons by variant:**
    ```
    Use list_flux_component_icons with variant "solid" to show only solid icons
    ```

@@ -63,13 +63,17 @@ class FluxDocumentationServer {
         tools: [
           {
             name: 'fetch_flux_docs',
-            description: 'Fetch documentation for Livewire Flux components from fluxui.dev',
+            description: 'Fetch documentation for Livewire Flux components or layouts from fluxui.dev',
             inputSchema: {
               type: 'object',
               properties: {
                 component: {
                   type: 'string',
                   description: 'The component name or path to fetch documentation for (optional)',
+                },
+                layout: {
+                  type: 'string',
+                  description: 'The layout name to fetch documentation for (e.g., "header", "sidebar") (optional)',
                 },
                 search: {
                   type: 'string',
@@ -81,6 +85,14 @@ class FluxDocumentationServer {
           {
             name: 'list_flux_components',
             description: 'List all available Flux components from the documentation',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
+          {
+            name: 'list_flux_layouts',
+            description: 'List all available Flux layouts from the documentation',
             inputSchema: {
               type: 'object',
               properties: {},
@@ -114,9 +126,11 @@ class FluxDocumentationServer {
       try {
         switch (name) {
           case 'fetch_flux_docs':
-            return await this.fetchFluxDocs(args.component, args.search);
+            return await this.fetchFluxDocs(args.component, args.layout, args.search);
           case 'list_flux_components':
             return await this.listFluxComponents();
+          case 'list_flux_layouts':
+            return await this.listFluxLayouts();
           case 'list_flux_component_icons':
             return await this.listFluxComponentIcons(args.variant, args.search);
           default:
@@ -135,13 +149,21 @@ class FluxDocumentationServer {
     });
   }
 
-  async fetchFluxDocs(component, search) {
+  async fetchFluxDocs(component, layout, search) {
     try {
-      const baseUrl = 'https://fluxui.dev/components';
-      let url = baseUrl;
+      let url;
       
-      if (component) {
-        url = `${baseUrl}/${component}`;
+      if (layout) {
+        // Handle layout requests
+        url = `https://fluxui.dev/layouts/${layout}`;
+      } else {
+        // Handle component requests (existing logic)
+        const baseUrl = 'https://fluxui.dev/components';
+        url = baseUrl;
+        
+        if (component) {
+          url = `${baseUrl}/${component}`;
+        }
       }
 
       // Create cache key based on URL and search parameter
@@ -174,7 +196,7 @@ class FluxDocumentationServer {
 
       // Extract reference section if component is specified
       let referenceText = '';
-      if (component) {
+      if (component || layout) {
         // Look for reference section by ID or heading
         const referenceSection = $('#reference, h2:contains("Reference"), h3:contains("Reference")').next();
         if (referenceSection.length > 0) {
@@ -288,6 +310,62 @@ class FluxDocumentationServer {
       return result;
     } catch (error) {
       throw new Error(`Failed to list components: ${error.message}`);
+    }
+  }
+
+  async listFluxLayouts() {
+    try {
+      const cacheKey = 'layouts:list';
+      
+      // Check cache first
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const response = await fetch('https://fluxui.dev/layouts');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Look for layout links with /layouts/ prefix
+      const links = [];
+      $('a').each((i, el) => {
+        const href = $(el).attr('href');
+        const text = $(el).text().trim();
+        
+        // Filter for links that start with https://fluxui.dev/layouts/
+        if (href && text && href.startsWith('https://fluxui.dev/layouts/') && !links.some(l => l.href === href)) {
+          links.push({
+            name: text,
+            href: href,
+            path: href.replace('https://fluxui.dev/layouts/', '')
+          });
+        }
+      });
+
+      const layoutsList = links
+        .map(link => `- ${link.name} (${link.path})`)
+        .join('\n');
+
+      const result = {
+        content: [
+          {
+            type: 'text',
+            text: `Available Flux Layouts:\n\n${layoutsList}`,
+          },
+        ],
+      };
+
+      // Cache the result
+      this.cache.set(cacheKey, result);
+      
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to list layouts: ${error.message}`);
     }
   }
 
