@@ -34,5 +34,8 @@ jobs:
           git fetch --prune --unshallow --tags
           echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
 
+      - name: Update package version
+        run: npm version ${{ steps.get-latest-tag.outputs.version }} --no-git-tag-version
+
       - name: Publish package
-        run: npm publish --tag ${{ steps.get-latest-tag.outputs.version }}
+        run: npm publish
