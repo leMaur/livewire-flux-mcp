@@ -9,9 +9,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js",
-    "docker:build": "docker build -t livewire-flux-mcp .",
-    "docker:run": "docker run -p 3000:3000 livewire-flux-mcp"
+    "dev": "node --watch index.js"
   },
   "keywords": ["mcp", "livewire", "flux", "documentation"],
   "author": "lemaur",

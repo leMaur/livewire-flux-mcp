@@ -76,24 +76,6 @@ npm run dev
 npx .
 ```
 
-#### Docker
-
-You can also run the server using Docker:
-
-```bash
-# Build the Docker image
-npm run docker:build
-# or manually:
-docker build -t livewire-flux-mcp .
-
-# Run the server in a container
-npm run docker:run
-# or manually:
-docker run --rm livewire-flux-mcp
-
-# Run with custom command
-docker run --rm livewire-flux-mcp npm start
-```
 
 ### Available MCP Tools
 
@@ -177,11 +159,6 @@ claude mcp add flux-docs node /path/to/livewire-flux-mcp/index.js
 claude mcp add flux-docs livewire-flux-mcp
 ```
 
-#### Method 3: Add with Docker
-```bash
-# Add using Docker (requires Docker to be installed)
-claude mcp add flux-docs docker run --rm livewire-flux-mcp
-```
 
 ### Configuration Scopes
 
