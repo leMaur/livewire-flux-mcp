@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.0.1 - 2025-09-10
+
+### What's changed
+
+* chore: Update publish workflow to adjust npm versioning and publishing (93897738) — by Maurizio
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.0.0...2.0.1
+
 ## 2.0.0 - 2025-09-10
 
 ### What's Changed
