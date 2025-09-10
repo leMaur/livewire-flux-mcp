@@ -1,0 +1,38 @@
+name: Publish
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Install node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Get latest tag
+        id: get-latest-tag
+        run: |
+          git fetch --prune --unshallow --tags
+          echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+
+      - name: Publish package
+        run: npm publish --tag ${{ steps.get-latest-tag.outputs.version }}
