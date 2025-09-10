@@ -2,6 +2,21 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.0.0 - 2025-09-10
+
+### What's Changed
+
+* feat: Add support for Flux layout documentation and tools (3839ed2) — by Maurizio
+* chore: Add `package-lock.json` for dependency management (ae25178) — by Maurizio
+* chore: Remove Docker support and related assets (24f1c7e) — by Maurizio
+* chore: Update project version and improve usage documentation (1905499) — by Maurizio
+* chore: Update package.json metadata for consistency (1ba9344) — by Maurizio
+* chore: Add GitHub Actions workflow for package publishing (15504c9) — by Maurizio
+* chore: Update README badges and add additional project info (cd3af62) — by Maurizio
+* chore: Add contribution and security guidelines, update README (531b18b) — by Maurizio
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/1.1.1...2.0.0
+
 ## 1.1.1 - 2025-08-02
 
 ### What's Changed
