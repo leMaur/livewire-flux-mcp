@@ -32,9 +32,26 @@ This MCP server scrapes and provides structured access to the Livewire Flux docu
 
 ## How to use it
 
+### From npm (recommended)
+
+#### Option 1: Use npx directly
+```bash
+# Run directly from npm without installing
+npx livewire-flux-mcp
+```
+
+#### Option 2: Install globally
+```bash
+# Install globally from npm
+npm install -g livewire-flux-mcp
+
+# Then run from anywhere
+livewire-flux-mcp
+```
+
 ### From GitHub Repository
 
-#### Option 1: Clone and Install Locally
+#### Option 3: Clone and Install Locally
 ```bash
 # Clone the repository
 git clone https://github.com/lemaur/livewire-flux-mcp.git
@@ -44,13 +61,13 @@ cd livewire-flux-mcp
 npm install
 ```
 
-#### Option 2: Use npx directly (recommended)
+#### Option 4: Use npx with GitHub
 ```bash
 # Run directly from GitHub without cloning
 npx github:lemaur/livewire-flux-mcp
 ```
 
-#### Option 3: Install globally
+#### Option 5: Install globally from GitHub
 ```bash
 # Install globally from GitHub
 npm install -g github:lemaur/livewire-flux-mcp
@@ -144,18 +161,24 @@ The caching system is particularly beneficial for the `list_flux_component_icons
 
 ### Adding the MCP Server
 
-#### Method 1: Add from GitHub (recommended)
+#### Method 1: Add from npm (recommended)
+```bash
+# Add server directly from npm
+claude mcp add flux-docs npx livewire-flux-mcp
+```
+
+#### Method 2: Add from GitHub
 ```bash
 # Add server directly from GitHub repository
 claude mcp add flux-docs npx github:lemaur/livewire-flux-mcp
 ```
 
-#### Method 2: Add locally installed version
+#### Method 3: Add locally installed version
 ```bash
 # If you cloned the repo locally
 claude mcp add flux-docs node /path/to/livewire-flux-mcp/index.js
 
-# If installed globally
+# If installed globally from npm or GitHub
 claude mcp add flux-docs livewire-flux-mcp
 ```
 
@@ -170,7 +193,7 @@ Choose the appropriate scope for your needs:
 
 ```bash
 # Add with specific scope
-claude mcp add --scope project flux-docs npx github:lemaur/livewire-flux-mcp
+claude mcp add --scope project flux-docs npx livewire-flux-mcp
 ```
 
 ### Using the Tools in Claude Code
