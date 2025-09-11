@@ -34,71 +34,7 @@ This MCP server scrapes and provides structured access to the Livewire Flux docu
 - Access up-to-date documentation directly from the official Flux website
 - **High-performance caching** with 24-hour expiration for optimal response times
 
-## How to use it
-
-### From npm (recommended)
-
-#### Option 1: Use npx directly
-```bash
-# Run directly from npm without installing
-npx livewire-flux-mcp
-```
-
-#### Option 2: Install globally
-```bash
-# Install globally from npm
-npm install -g livewire-flux-mcp
-
-# Then run from anywhere
-livewire-flux-mcp
-```
-
-### From GitHub Repository
-
-#### Option 3: Clone and Install Locally
-```bash
-# Clone the repository
-git clone https://github.com/lemaur/livewire-flux-mcp.git
-cd livewire-flux-mcp
-
-# Install dependencies
-npm install
-```
-
-#### Option 4: Use npx with GitHub
-```bash
-# Run directly from GitHub without cloning
-npx github:lemaur/livewire-flux-mcp
-```
-
-#### Option 5: Install globally from GitHub
-```bash
-# Install globally from GitHub
-npm install -g github:lemaur/livewire-flux-mcp
-
-# Then run from anywhere
-livewire-flux-mcp
-```
-
-### Running the server
-
-#### Start the MCP server:
-```bash
-npm start
-```
-
-#### Development mode with file watching:
-```bash
-npm run dev
-```
-
-#### Run directly with npx:
-```bash
-npx .
-```
-
-
-### Available MCP Tools
+## Available MCP Tools
 
 The server provides four MCP tools:
 
@@ -141,6 +77,27 @@ Once the MCP server is running, AI assistants can use it to:
 
 The server automatically fetches the latest documentation from fluxui.dev/components, fluxui.dev/layouts, and Heroicons from GitHub, presenting everything in a structured format for easy consumption by AI assistants. When fetching component or layout documentation, it includes both the main content and the reference section with detailed API information.
 
+## Manually Registering the MCP Server
+
+Sometimes you may need to manually register the Livewire Flux MCP server with your editor of choice. 
+You should register the MCP server using the following details:
+
+<table>
+<tr><td><strong>Command</strong></td><td><code>npx</code></td></tr>
+<tr><td><strong>Args</strong></td><td><code>livewire-flux-mcp</code></td></tr>
+</table>
+
+```json
+{
+    "mcpServers": {
+        "flux-docs": {
+            "command": "npx",
+            "args": ["livewire-flux-mcp"]
+        }
+    }
+}
+```
+
 ## Performance & Caching
 
 The MCP server includes intelligent caching to provide optimal performance:
@@ -160,103 +117,6 @@ The MCP server includes intelligent caching to provide optimal performance:
 - **Cache storage**: In-memory (resets when server restarts)
 
 The caching system is particularly beneficial for the `list_flux_component_icons` tool, which can make up to 4 GitHub API calls per request without caching.
-
-## Integration with Claude Code
-
-### Adding the MCP Server
-
-#### Method 1: Add from npm (recommended)
-```bash
-# Add server directly from npm
-claude mcp add flux-docs npx livewire-flux-mcp
-```
-
-#### Method 2: Add from GitHub
-```bash
-# Add server directly from GitHub repository
-claude mcp add flux-docs npx github:lemaur/livewire-flux-mcp
-```
-
-#### Method 3: Add locally installed version
-```bash
-# If you cloned the repo locally
-claude mcp add flux-docs node /path/to/livewire-flux-mcp/index.js
-
-# If installed globally from npm or GitHub
-claude mcp add flux-docs livewire-flux-mcp
-```
-
-
-### Configuration Scopes
-
-Choose the appropriate scope for your needs:
-
-- **Local** (default): Only available in current project
-- **Project**: Shared with team via `.mcp.json` file
-- **User**: Available across all your projects
-
-```bash
-# Add with specific scope
-claude mcp add --scope project flux-docs npx livewire-flux-mcp
-```
-
-### Using the Tools in Claude Code
-
-Once added, you can use the MCP tools in your conversations:
-
-1. **List available components:**
-   ```
-   Use the list_flux_components tool to show me all available Flux components
-   ```
-
-2. **List available layouts:**
-   ```
-   Use the list_flux_layouts tool to show me all available Flux layouts
-   ```
-
-3. **Get specific component documentation:**
-   ```
-   Use fetch_flux_docs to get documentation for the Button component
-   ```
-
-4. **Get specific layout documentation:**
-   ```
-   Use fetch_flux_docs to get documentation for the header layout
-   ```
-
-5. **Search documentation:**
-   ```
-   Use fetch_flux_docs to search for "form validation" in the Flux docs
-   ```
-
-6. **Browse all available icons:**
-   ```
-   Use list_flux_component_icons to show me all available Heroicons
-   ```
-
-7. **Search for specific icons:**
-   ```
-   Use list_flux_component_icons with search "arrow" to find arrow-related icons
-   ```
-
-8. **Filter icons by variant:**
-   ```
-   Use list_flux_component_icons with variant "solid" to show only solid icons
-   ```
-
-### Managing the Server
-
-```bash
-# List all MCP servers
-claude mcp list
-
-# Remove the server
-claude mcp remove flux-docs
-
-# View server logs
-claude mcp logs flux-docs
-```
-
 
 ## Changelog
 
