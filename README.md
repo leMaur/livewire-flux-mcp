@@ -3,10 +3,14 @@
 [![Npm](https://img.shields.io/npm/v/livewire-flux-mcp?style=flat-square)](https://www.npmjs.com/package/livewire-flux-mcp)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/lemaur/livewire-flux-mcp/github-code-scanning%2Fcodeql?style=flat-square)](https://github.com/leMaur/livewire-flux-mcp/actions/workflows/github-code-scanning/codeql)
 [![License](https://img.shields.io/github/license/lemaur/livewire-flux-mcp?style=flat-square&color=yellow)](https://github.com/leMaur/livewire-flux-mcp/blob/main/LICENSE.md)
-![Downloads](https://img.shields.io/npm/d18m/livewire-flux-mcp?style=flat-square)
+[![Downloads](https://img.shields.io/npm/d18m/livewire-flux-mcp?style=flat-square)](https://www.npmjs.com/package/livewire-flux-mcp)
 [![Sponsor](https://img.shields.io/github/sponsors/lemaur?style=flat-square&color=pink)](https://github.com/sponsors/leMaur)
 
-An MCP (Model Context Protocol) server that provides access to Livewire Flux Components and Layouts from [fluxui.dev](https://fluxui.dev/). This server allows AI assistants to fetch and search through Flux component and layout documentation on demand.
+An MCP (Model Context Protocol) server that provides access to Livewire Flux Components and Layouts from [Livewire&nbsp;Flux](https://fluxui.dev). This server allows AI assistants to fetch and search through Flux component and layout documentation on demand.
+
+> **⚠️ Disclaimer**
+> 
+> This is a personal project and is not affiliated with Livewire Flux.
 
 ## Support Me
 
@@ -104,7 +108,7 @@ The MCP server includes intelligent caching to provide optimal performance:
 
 - **24-hour cache expiration** - Content is cached for 1 day to balance freshness with performance
 - **Automatic cache management** - Expired entries are automatically cleaned up
-- **Intelligent cache keys** - Different cache entries for different parameters (component, search, variant)
+- **Intelligent cache keys** - Different cache entries for different parameters (component, layout, search, variant)
 - **GitHub API rate limit protection** - Prevents hitting GitHub API limits when fetching Heroicons
 - **Instant responses** - Cached requests return in milliseconds instead of seconds
 
