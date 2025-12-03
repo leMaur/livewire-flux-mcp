@@ -42,5 +42,24 @@ jobs:
       - name: Update package version
         run: npm version ${{ steps.get-latest-tag.outputs.version }} --no-git-tag-version
 
+      # --- OIDC auth steps added here ---
+      - name: Verify npm supports OIDC (npm >= 9.8)
+        run: |
+          echo "npm version: $(npm --version)"
+          node -e "const v=require('child_process').execSync('npm --version').toString().trim().split('.').map(Number); if(v[0]<9 || (v[0]==9 && v[1]<8)){console.error('npm >= 9.8 required for OIDC (install a newer npm)'); process.exit(1)}"
+
+      - name: Remove any cached auth and .npmrc
+        run: |
+          rm -f ~/.npmrc || true
+          npm config delete //registry.npmjs.org/:_authToken || true
+
+      - name: Authenticate to npm via OIDC
+        run: |
+          # Exchange GitHub Actions OIDC token for npm credentials and write ~/.npmrc
+          # Requires npm >= 9.8
+          npm login --auth-type=oidc --registry=https://registry.npmjs.org
+
+      # --- end OIDC auth steps ---
+
       - name: Publish package
         run: npm publish --access public
