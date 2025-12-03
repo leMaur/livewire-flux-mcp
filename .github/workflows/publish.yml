@@ -2,7 +2,7 @@ name: Publish
 
 on:
   release:
-    types: [released]
+    types: [published]
 
 permissions:
   id-token: write  # Required for OIDC
@@ -11,13 +11,13 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: main
+          fetch-depth: 0
 
       - name: Install node
         uses: actions/setup-node@v6
@@ -31,11 +31,15 @@ jobs:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          git fetch --prune --unshallow --tags
-          echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+          # fetch tags if not present
+          git fetch --prune --tags --no-recurse-submodules
+          TAG=$(git describe --tags --abbrev=0)
+          # strip leading 'v' if present
+          TAG=${TAG#v}
+          echo "version=$TAG" >> $GITHUB_OUTPUT
 
       - name: Update package version
         run: npm version ${{ steps.get-latest-tag.outputs.version }} --no-git-tag-version
 
       - name: Publish package
-        run: npm publish
+        run: npm publish --access public
