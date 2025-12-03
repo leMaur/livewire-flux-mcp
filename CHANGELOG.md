@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.3 - 2025-12-03
+
+### What's Changed
+
+* Implement OIDC authentication for npm publishing by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/13
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.2...2.1.3
+
 ## 2.1.2 - 2025-12-03
 
 **Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.1...2.1.2
