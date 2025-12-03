@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.1 - 2025-12-03
+
+### What's Changed
+
+* Update GitHub Actions workflow for publishing package by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/12
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.0...2.1.1
+
 ## 2.1.0 - 2025-12-03
 
 ### What's Changed
