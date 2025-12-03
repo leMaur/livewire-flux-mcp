@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.4 - 2025-12-03
+
+### What's Changed
+
+* Refactor publish workflow to remove OIDC steps by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/14
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.3...2.1.4
+
 ## 2.1.3 - 2025-12-03
 
 ### What's Changed
