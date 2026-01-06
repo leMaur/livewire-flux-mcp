@@ -2,25 +2,24 @@ name: Publish
 
 on:
   release:
-    types: [released]
+    types: [published]
 
 permissions:
-  id-token: write  # Required for OIDC
+  id-token: write
   contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    environment: Publishing
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          ref: main
+        uses: actions/checkout@v6
 
       - name: Install node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
@@ -28,14 +27,28 @@ jobs:
       - name: Update npm
         run: npm install -g npm@latest
 
+      - name: Verify npm supports OIDC (npm >= 9.8)
+        run: |
+          echo "npm version: $(npm --version)"
+          node -e "const v=require('child_process').execSync('npm --version').toString().trim().split('.').map(Number); if(v[0]<9 || (v[0]==9 && v[1]<8)){console.error('npm >= 9.8 required for OIDC (install a newer npm)'); process.exit(1)}"
+
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          git fetch --prune --unshallow --tags
-          echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+          # fetch tags if not present
+          git fetch --prune --tags --no-recurse-submodules
+          TAG=$(git describe --tags --abbrev=0)
+          # strip leading 'v' if present
+          TAG=${TAG#v}
+          echo "version=$TAG" >> $GITHUB_OUTPUT
 
       - name: Update package version
         run: npm version ${{ steps.get-latest-tag.outputs.version }} --no-git-tag-version
+
+      - name: Remove any cached auth and .npmrc
+        run: |
+          rm -f ~/.npmrc || true
+          npm config delete //registry.npmjs.org/:_authToken || true
 
       - name: Publish package
         run: npm publish

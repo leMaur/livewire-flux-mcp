@@ -2,6 +2,45 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.4 - 2025-12-03
+
+### What's Changed
+
+* Refactor publish workflow to remove OIDC steps by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/14
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.3...2.1.4
+
+## 2.1.3 - 2025-12-03
+
+### What's Changed
+
+* Implement OIDC authentication for npm publishing by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/13
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.2...2.1.3
+
+## 2.1.2 - 2025-12-03
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.1...2.1.2
+
+## 2.1.1 - 2025-12-03
+
+### What's Changed
+
+* Update GitHub Actions workflow for publishing package by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/12
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.0...2.1.1
+
+## 2.1.0 - 2025-12-03
+
+### What's Changed
+
+* chore(deps): Bump stefanzweifel/git-auto-commit-action from 6 to 7 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/8
+* chore(deps): Bump actions/setup-node from 5 to 6 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/9
+* chore(deps): Bump actions/checkout from 5 to 6 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/10
+* chore(deps): Bump @modelcontextprotocol/sdk from 0.4.0 to 1.24.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/11
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.0.1...2.1.0
+
 ## 2.0.1 - 2025-09-10
 
 ### What's changed
