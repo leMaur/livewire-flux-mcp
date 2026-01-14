@@ -2,6 +2,15 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.7 - 2026-01-14
+
+### What's Changed
+
+* chore(deps): Bump dependabot/fetch-metadata from 2.4.0 to 2.5.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/17
+* chore(deps): Bump hono from 4.11.3 to 4.11.4 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/18
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.6...2.1.7
+
 ## 2.1.6 - 2026-01-08
 
 **Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.5...2.1.6
