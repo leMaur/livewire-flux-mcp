@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "update": "npx npm-check-updates -u"
   },
   "keywords": [
     "mcp",
@@ -28,8 +29,9 @@
   },
   "homepage": "https://github.com/lemaur/livewire-flux-mcp#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.1",
-    "cheerio": "^1.0.0",
-    "node-fetch": "^3.3.2"
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "cheerio": "^1.2.0",
+    "node-fetch": "^3.3.2",
+    "npm-check-updates": "^19.3.1"
   }
 }
