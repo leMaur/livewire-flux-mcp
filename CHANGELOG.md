@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.8 - 2026-01-24
+
+### What's Changed
+
+* chore(deps): Bump @modelcontextprotocol/sdk from 1.25.2 to 1.25.3 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/19
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.7...2.1.8
+
 ## 2.1.7 - 2026-01-14
 
 ### What's Changed
