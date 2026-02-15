@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.11 - 2026-02-15
+
+### What's Changed
+
+* chore(deps): Bump qs from 6.14.1 to 6.14.2 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/23
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.10...2.1.11
+
 ## 2.1.10 - 2026-02-05
 
 ### What's Changed
