@@ -2,6 +2,15 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.12 - 2026-02-22
+
+### What's Changed
+
+* chore(deps): Bump npm-check-updates from 19.3.2 to 19.4.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/25
+* chore(deps): Bump the npm_and_yarn group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/26
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.11...2.1.12
+
 ## 2.1.11 - 2026-02-15
 
 ### What's Changed
