@@ -1,6 +1,6 @@
 {
   "name": "livewire-flux-mcp",
-  "version": "2.1.12",
+  "version": "2.1.13",
   "description": "MCP server for Livewire Flux Components documentation",
   "main": "index.js",
   "type": "module",
