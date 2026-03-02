@@ -2,6 +2,25 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.13 - 2026-03-02
+
+### What's Changed
+
+* chore(deps): Bump @modelcontextprotocol/sdk from 1.26.0 to 1.27.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/28
+* chore(deps): Bump npm-check-updates from 19.4.1 to 19.6.2 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/29
+* chore(deps): Bump hono from 4.12.1 to 4.12.2 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/27
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.12...2.1.13
+
+## 2.1.12 - 2026-02-22
+
+### What's Changed
+
+* chore(deps): Bump npm-check-updates from 19.3.2 to 19.4.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/25
+* chore(deps): Bump the npm_and_yarn group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/26
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.11...2.1.12
+
 ## 2.1.11 - 2026-02-15
 
 ### What's Changed
