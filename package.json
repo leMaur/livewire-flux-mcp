@@ -24,12 +24,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lemaur/livewire-flux-mcp.git"
+    "url": "git+https://github.com/leMaur/livewire-flux-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/lemaur/livewire-flux-mcp/issues"
+    "url": "https://github.com/leMaur/livewire-flux-mcp/issues"
   },
-  "homepage": "https://github.com/lemaur/livewire-flux-mcp#readme",
+  "homepage": "https://github.com/leMaur/livewire-flux-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "cheerio": "^1.2.0",
