@@ -6,7 +6,10 @@
       "Bash(npm install)",
       "Bash(node:*)",
       "Bash(git tag:*)",
-      "Bash(git describe:*)"
+      "Bash(git describe:*)",
+      "Bash(claude mcp:*)",
+      "Bash(claude plugin:*)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }

@@ -10,7 +10,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "update": "npx npm-check-updates -u"
+    "update": "npx npm-check-updates -u",
+    "test": "node --test test/**/*.test.js",
+    "test:watch": "node --test --watch test/**/*.test.js"
   },
   "keywords": [
     "mcp",
