@@ -1,18 +1,26 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "hooks": {
-    "postToolUse": [
+    "PostToolUse": [
       {
-        "pattern": "Edit(file_path:**/index.js)",
-        "command": "npm test 2>/dev/null || echo '⚠️  No tests configured yet. Run /test-mcp-tools to create tests.'",
-        "description": "Run tests after editing index.js (once tests exist)"
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | { read -r f; echo \"$f\" | grep -q 'index\\.js$' && npm test 2>/dev/null || echo '⚠️  No tests configured yet. Run /test-mcp-tools to create tests.' || true; }"
+          }
+        ]
       }
     ],
-    "preToolUse": [
+    "PreToolUse": [
       {
-        "pattern": "Edit(file_path:**/package-lock.json)",
-        "command": "echo '❌ Use npm install/update instead of editing package-lock.json directly' && exit 1",
-        "description": "Prevent manual edits to package-lock.json"
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | { read -r f; echo \"$f\" | grep -q 'package-lock\\.json$' && echo '❌ Use npm install/update instead of editing package-lock.json directly' && exit 1 || exit 0; }"
+          }
+        ]
       }
     ]
   }

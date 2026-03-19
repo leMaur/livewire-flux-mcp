@@ -9,7 +9,8 @@
       "Bash(git describe:*)",
       "Bash(claude mcp:*)",
       "Bash(claude plugin:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Skill(update-config)"
     ],
     "deny": []
   }
