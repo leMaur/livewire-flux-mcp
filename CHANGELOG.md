@@ -2,6 +2,10 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.15 - 2026-03-19
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.14...2.1.15
+
 ## 2.1.14 - 2026-03-06
 
 ### What's Changed
