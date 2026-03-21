@@ -101,10 +101,10 @@ describe('FluxDocumentationServer Integration', () => {
       const response = await global.fetch('https://fluxui.dev/docs');
       const html = await response.text();
 
-      // Verify fixture contains expected links
-      assert.ok(html.includes('https://fluxui.dev/components/button'));
-      assert.ok(html.includes('https://fluxui.dev/components/input'));
-      assert.ok(html.includes('https://fluxui.dev/components/modal'));
+      // Verify fixture contains expected component links (check href attribute to avoid URL substring ambiguity)
+      assert.ok(html.includes('href="https://fluxui.dev/components/button"'));
+      assert.ok(html.includes('href="https://fluxui.dev/components/input"'));
+      assert.ok(html.includes('href="https://fluxui.dev/components/modal"'));
 
       global.fetch = originalFetch;
     });
