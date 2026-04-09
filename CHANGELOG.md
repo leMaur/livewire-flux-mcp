@@ -2,6 +2,17 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.17 - 2026-04-09
+
+### What's Changed
+
+* fix: resolve CodeQL incomplete-url-substring-sanitization alerts by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/33
+* chore(deps): Bump @modelcontextprotocol/sdk from 1.27.1 to 1.28.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/36
+* chore(deps): Bump @modelcontextprotocol/sdk from 1.28.0 to 1.29.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/38
+* chore(deps): Bump dependabot/fetch-metadata from 2.5.0 to 3.0.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/34
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.16...2.1.17
+
 ## 2.1.16 - 2026-03-19
 
 **Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.15...2.1.16
