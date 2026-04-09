@@ -34,6 +34,6 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "cheerio": "^1.2.0",
     "node-fetch": "^3.3.2",
-    "npm-check-updates": "^19.6.5"
+    "npm-check-updates": "^20.0.0"
   }
 }
