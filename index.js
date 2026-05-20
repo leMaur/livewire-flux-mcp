@@ -17,6 +17,15 @@ const pkg = JSON.parse(
   readFileSync(join(__dirname, 'package.json'), 'utf-8')
 );
 
+const REQUEST_TIMEOUT_MS = 10_000;
+const USER_AGENT = `livewire-flux-mcp/${pkg.version} (+https://github.com/leMaur/livewire-flux-mcp)`;
+
+function githubAuthHeaders() {
+  return process.env.GITHUB_TOKEN
+    ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+    : {};
+}
+
 export const TOOL_DEFINITIONS = [
   {
     name: 'fetch_flux_docs',
@@ -124,6 +133,25 @@ export class FluxDocumentationServer {
     this.setupToolHandlers();
   }
 
+  async fetchWithTimeout(url, { headers = {}, timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await this.fetch(url, {
+        headers: { 'User-Agent': USER_AGENT, ...headers },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timed out after ${timeoutMs}ms: ${url}`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return { tools: TOOL_DEFINITIONS };
@@ -147,6 +175,7 @@ export class FluxDocumentationServer {
         }
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: 'text',
@@ -184,7 +213,7 @@ export class FluxDocumentationServer {
         return cached;
       }
 
-      const response = await this.fetch(url);
+      const response = await this.fetchWithTimeout(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -276,7 +305,7 @@ export class FluxDocumentationServer {
         return cached;
       }
 
-      const response = await this.fetch('https://fluxui.dev/docs');
+      const response = await this.fetchWithTimeout('https://fluxui.dev/docs');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -332,7 +361,7 @@ export class FluxDocumentationServer {
         return cached;
       }
 
-      const response = await this.fetch('https://fluxui.dev/layouts');
+      const response = await this.fetchWithTimeout('https://fluxui.dev/layouts');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -423,7 +452,7 @@ export class FluxDocumentationServer {
         const variantConfig = variants[variantName];
         const url = `https://api.github.com/repos/tailwindlabs/heroicons/contents/optimized/${variantConfig.path}`;
 
-        const response = await this.fetch(url);
+        const response = await this.fetchWithTimeout(url, { headers: githubAuthHeaders() });
         if (!response.ok) {
           throw new Error(`Failed to fetch ${variantName} icons: ${response.status}`);
         }
