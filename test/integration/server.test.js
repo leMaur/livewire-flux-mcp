@@ -1,13 +1,13 @@
-import { describe, test, mock } from 'node:test';
+import { describe, test, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { FluxDocumentationServer, SimpleCache } from '../../index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load fixtures
 const componentFixture = readFileSync(
   join(__dirname, '../fixtures/component.html'),
   'utf-8'
@@ -20,219 +20,236 @@ const iconsApiFixture = JSON.parse(
   readFileSync(join(__dirname, '../fixtures/icons-api.json'), 'utf-8')
 );
 
-describe('FluxDocumentationServer Integration', () => {
-  describe('fetch_flux_docs tool', () => {
-    test('fetches component documentation', async () => {
-      // Mock fetch to return fixture
-      const originalFetch = global.fetch;
-      global.fetch = mock.fn(async (url) => ({
-        ok: true,
-        status: 200,
-        text: async () => componentFixture
-      }));
+const okText = (body) => ({
+  ok: true,
+  status: 200,
+  text: async () => body,
+});
 
-      // Test would invoke the actual tool here
-      // For now, verify the mock works
-      const response = await global.fetch('https://fluxui.dev/components/button');
-      const html = await response.text();
+const okJson = (body) => ({
+  ok: true,
+  status: 200,
+  json: async () => body,
+});
 
-      assert.ok(html.includes('Button'));
-      assert.ok(html.includes('Reference'));
+const httpError = (status) => ({
+  ok: false,
+  status,
+  statusText: 'error',
+});
 
-      global.fetch = originalFetch;
+const buildServer = (fetchImpl) =>
+  new FluxDocumentationServer({ fetch: fetchImpl });
+
+describe('FluxDocumentationServer integration', () => {
+  describe('fetchFluxDocs', () => {
+    test('returns MCP-shaped response with component documentation', async () => {
+      const server = buildServer(mock.fn(async () => okText(componentFixture)));
+
+      const result = await server.fetchFluxDocs('button', undefined, undefined);
+
+      assert.ok(Array.isArray(result.content));
+      assert.strictEqual(result.content[0].type, 'text');
+      assert.match(result.content[0].text, /Documentation from https:\/\/fluxui\.dev\/components\/button/);
+      assert.match(result.content[0].text, /Button/);
     });
 
-    test('handles network errors gracefully', async () => {
-      const originalFetch = global.fetch;
-      global.fetch = mock.fn(async () => {
-        throw new Error('Network error');
-      });
+    test('targets the layouts URL when layout is provided', async () => {
+      const fetchSpy = mock.fn(async () => okText(componentFixture));
+      const server = buildServer(fetchSpy);
 
-      try {
-        await global.fetch('https://fluxui.dev/components/button');
-        assert.fail('Should have thrown an error');
-      } catch (error) {
-        assert.strictEqual(error.message, 'Network error');
-      }
+      await server.fetchFluxDocs(undefined, 'header', undefined);
 
-      global.fetch = originalFetch;
+      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+      assert.strictEqual(
+        fetchSpy.mock.calls[0].arguments[0],
+        'https://fluxui.dev/layouts/header'
+      );
     });
 
-    test('handles HTTP errors (404, 500)', async () => {
-      const originalFetch = global.fetch;
-      global.fetch = mock.fn(async () => ({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
-      }));
-
-      const response = await global.fetch('https://fluxui.dev/components/invalid');
-      assert.strictEqual(response.ok, false);
-      assert.strictEqual(response.status, 404);
-
-      global.fetch = originalFetch;
-    });
-
-    test('filters content by search term', () => {
-      const content = `
-        Button documentation
-        Input documentation
-        Modal documentation
-      `;
-      const searchTerm = 'button';
-      const lines = content.split('\n');
-      const filtered = lines.filter(line =>
-        line.toLowerCase().includes(searchTerm.toLowerCase())
+    test('filters by search term (case-insensitive)', async () => {
+      const server = buildServer(
+        mock.fn(async () =>
+          okText('<main>Button docs\nInput docs\nModal docs</main>')
+        )
       );
 
-      assert.strictEqual(filtered.length, 1);
-      assert.ok(filtered[0].includes('Button'));
+      const result = await server.fetchFluxDocs(undefined, undefined, 'button');
+
+      assert.match(result.content[0].text, /Button docs/);
+      assert.doesNotMatch(result.content[0].text, /Modal docs/);
+    });
+
+    test('serves second identical call from cache (only one fetch)', async () => {
+      const fetchSpy = mock.fn(async () => okText(componentFixture));
+      const server = buildServer(fetchSpy);
+
+      const first = await server.fetchFluxDocs('button', undefined, undefined);
+      const second = await server.fetchFluxDocs('button', undefined, undefined);
+
+      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+      assert.deepStrictEqual(second, first);
+    });
+
+    test('different search terms produce distinct cache keys', async () => {
+      const fetchSpy = mock.fn(async () => okText(componentFixture));
+      const server = buildServer(fetchSpy);
+
+      await server.fetchFluxDocs('button', undefined, 'foo');
+      await server.fetchFluxDocs('button', undefined, 'bar');
+
+      assert.strictEqual(fetchSpy.mock.callCount(), 2);
+    });
+
+    test('rejects with descriptive error on HTTP 404', async () => {
+      const server = buildServer(mock.fn(async () => httpError(404)));
+
+      await assert.rejects(
+        () => server.fetchFluxDocs('nope', undefined, undefined),
+        /Failed to fetch documentation:.*404/
+      );
+    });
+
+    test('rejects with descriptive error on network failure', async () => {
+      const server = buildServer(
+        mock.fn(async () => {
+          throw new Error('boom');
+        })
+      );
+
+      await assert.rejects(
+        () => server.fetchFluxDocs('button', undefined, undefined),
+        /Failed to fetch documentation:.*boom/
+      );
     });
   });
 
-  describe('list_flux_components tool', () => {
-    test('parses component list from HTML', async () => {
-      const originalFetch = global.fetch;
-      global.fetch = mock.fn(async () => ({
-        ok: true,
-        text: async () => componentsListFixture
-      }));
-
-      const response = await global.fetch('https://fluxui.dev/docs');
-      const html = await response.text();
-
-      // Verify fixture contains expected component links (check href attribute to avoid URL substring ambiguity)
-      assert.ok(html.includes('href="https://fluxui.dev/components/button"'));
-      assert.ok(html.includes('href="https://fluxui.dev/components/input"'));
-      assert.ok(html.includes('href="https://fluxui.dev/components/modal"'));
-
-      global.fetch = originalFetch;
-    });
-
-    test('deduplicates component links', () => {
-      const links = [
-        { href: '/components/button', name: 'Button' },
-        { href: '/components/button', name: 'Button' },
-        { href: '/components/input', name: 'Input' }
-      ];
-
-      const unique = links.filter((link, index, self) =>
-        index === self.findIndex(l => l.href === link.href)
+  describe('listFluxComponents', () => {
+    test('parses component links from /docs and returns MCP shape', async () => {
+      const server = buildServer(
+        mock.fn(async () => okText(componentsListFixture))
       );
 
-      assert.strictEqual(unique.length, 2);
+      const result = await server.listFluxComponents();
+
+      assert.strictEqual(result.content[0].type, 'text');
+      assert.match(result.content[0].text, /Available Flux Components/);
+      assert.match(result.content[0].text, /button/);
+      assert.match(result.content[0].text, /input/);
+      assert.match(result.content[0].text, /modal/);
+    });
+
+    test('caches the listing across calls', async () => {
+      const fetchSpy = mock.fn(async () => okText(componentsListFixture));
+      const server = buildServer(fetchSpy);
+
+      await server.listFluxComponents();
+      await server.listFluxComponents();
+
+      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+    });
+
+    test('rejects on HTTP error', async () => {
+      const server = buildServer(mock.fn(async () => httpError(500)));
+
+      await assert.rejects(() => server.listFluxComponents(), /Failed to list components/);
     });
   });
 
-  describe('list_flux_component_icons tool', () => {
-    test('fetches icons from GitHub API', async () => {
-      const originalFetch = global.fetch;
-      global.fetch = mock.fn(async () => ({
-        ok: true,
-        json: async () => iconsApiFixture
-      }));
-
-      const response = await global.fetch(
-        'https://api.github.com/repos/tailwindlabs/heroicons/contents/optimized/24/outline'
+  describe('listFluxLayouts', () => {
+    test('fetches the layouts index page', async () => {
+      const fetchSpy = mock.fn(async () =>
+        okText(
+          '<a href="https://fluxui.dev/layouts/header">Header</a>' +
+          '<a href="https://fluxui.dev/layouts/sidebar">Sidebar</a>'
+        )
       );
-      const icons = await response.json();
+      const server = buildServer(fetchSpy);
 
-      assert.ok(Array.isArray(icons));
-      assert.strictEqual(icons.length, 3);
-      assert.ok(icons.every(icon => icon.name.endsWith('.svg')));
+      const result = await server.listFluxLayouts();
 
-      global.fetch = originalFetch;
-    });
-
-    test('filters icons by search term', () => {
-      const icons = ['academic-cap', 'arrow-left', 'arrow-right', 'user'];
-      const searchTerm = 'arrow';
-
-      const filtered = icons.filter(icon =>
-        icon.toLowerCase().includes(searchTerm.toLowerCase())
+      assert.strictEqual(
+        fetchSpy.mock.calls[0].arguments[0],
+        'https://fluxui.dev/layouts'
       );
-
-      assert.strictEqual(filtered.length, 2);
-      assert.ok(filtered.includes('arrow-left'));
-      assert.ok(filtered.includes('arrow-right'));
-    });
-
-    test('removes .svg extension from icon names', () => {
-      const files = iconsApiFixture;
-      const iconNames = files
-        .filter(f => f.name.endsWith('.svg'))
-        .map(f => f.name.slice(0, -4));
-
-      assert.ok(iconNames.includes('academic-cap'));
-      assert.ok(iconNames.includes('arrow-left'));
-      assert.ok(iconNames.includes('user'));
-      assert.ok(iconNames.every(name => !name.endsWith('.svg')));
+      assert.match(result.content[0].text, /Header/);
+      assert.match(result.content[0].text, /Sidebar/);
     });
   });
 
-  describe('Cache behavior', () => {
-    test('caches responses with unique keys', () => {
-      const cache = new Map();
-      const key1 = 'docs:https://fluxui.dev/components/button:';
-      const key2 = 'docs:https://fluxui.dev/components/input:';
+  describe('listFluxComponentIcons', () => {
+    test('fetches all 4 variants when none specified', async () => {
+      const fetchSpy = mock.fn(async () => okJson(iconsApiFixture));
+      const server = buildServer(fetchSpy);
 
-      cache.set(key1, { content: 'Button docs' });
-      cache.set(key2, { content: 'Input docs' });
+      const result = await server.listFluxComponentIcons(undefined, undefined);
 
-      assert.strictEqual(cache.size, 2);
-      assert.notStrictEqual(cache.get(key1), cache.get(key2));
+      assert.strictEqual(fetchSpy.mock.callCount(), 4);
+      assert.match(result.content[0].text, /OUTLINE/);
+      assert.match(result.content[0].text, /SOLID/);
+      assert.match(result.content[0].text, /MINI/);
+      assert.match(result.content[0].text, /MICRO/);
     });
 
-    test('includes search parameter in cache key', () => {
-      const url = 'https://fluxui.dev/components/button';
-      const search1 = 'form';
-      const search2 = 'validation';
+    test('fetches only one variant when specified', async () => {
+      const fetchSpy = mock.fn(async () => okJson(iconsApiFixture));
+      const server = buildServer(fetchSpy);
 
-      const key1 = `docs:${url}:${search1}`;
-      const key2 = `docs:${url}:${search2}`;
+      await server.listFluxComponentIcons('outline', undefined);
 
-      assert.notStrictEqual(key1, key2);
+      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+      assert.match(
+        fetchSpy.mock.calls[0].arguments[0],
+        /optimized\/24\/outline$/
+      );
     });
 
-    test('cache hit returns same data', () => {
-      const cache = new Map();
-      const key = 'test-key';
-      const data = { content: 'test data' };
+    test('search filter narrows icon list', async () => {
+      const server = buildServer(mock.fn(async () => okJson(iconsApiFixture)));
 
-      cache.set(key, data);
-      const retrieved = cache.get(key);
+      const result = await server.listFluxComponentIcons('outline', 'arrow');
 
-      assert.strictEqual(retrieved, data);
+      assert.match(result.content[0].text, /arrow-left/);
+      assert.doesNotMatch(result.content[0].text, /academic-cap/);
+    });
+
+    test('strips .svg from icon names', async () => {
+      const server = buildServer(mock.fn(async () => okJson(iconsApiFixture)));
+
+      const result = await server.listFluxComponentIcons('outline', undefined);
+
+      assert.doesNotMatch(result.content[0].text, /\.svg/);
+    });
+
+    test('caches results by (variant, search) combination', async () => {
+      const fetchSpy = mock.fn(async () => okJson(iconsApiFixture));
+      const server = buildServer(fetchSpy);
+
+      await server.listFluxComponentIcons('outline', undefined);
+      await server.listFluxComponentIcons('outline', undefined);
+
+      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+    });
+
+    test('rejects on GitHub HTTP error', async () => {
+      const server = buildServer(mock.fn(async () => httpError(403)));
+
+      await assert.rejects(
+        () => server.listFluxComponentIcons('outline', undefined),
+        /Failed to list icons/
+      );
     });
   });
 
-  describe('Error handling', () => {
-    test('wraps errors in MCP response format', () => {
-      const errorMessage = 'Failed to fetch documentation';
-      const response = {
-        content: [
-          {
-            type: 'text',
-            text: `Error: ${errorMessage}`
-          }
-        ]
-      };
-
-      assert.ok(Array.isArray(response.content));
-      assert.ok(response.content[0].text.startsWith('Error:'));
+  describe('FluxDocumentationServer construction', () => {
+    test('exposes a SimpleCache instance', () => {
+      const server = buildServer(mock.fn(async () => okText('')));
+      assert.ok(server.cache instanceof SimpleCache);
     });
 
-    test('provides descriptive error messages', () => {
-      const errors = [
-        'Failed to fetch documentation: Network error',
-        'Failed to list components: HTTP error! status: 404',
-        'Failed to list icons: GitHub API rate limit exceeded'
-      ];
-
-      errors.forEach(error => {
-        assert.ok(error.includes('Failed to'));
-        assert.ok(error.includes(':'));
-      });
+    test('defaults to bundled fetch implementation when none injected', () => {
+      const server = new FluxDocumentationServer();
+      assert.ok(typeof server.fetch === 'function');
     });
   });
 });

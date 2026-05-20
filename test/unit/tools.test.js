@@ -1,181 +1,84 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
+import { TOOL_DEFINITIONS } from '../../index.js';
+
+const byName = (name) => TOOL_DEFINITIONS.find((t) => t.name === name);
 
 describe('MCP Tool Schemas', () => {
-  const expectedTools = [
-    'fetch_flux_docs',
-    'list_flux_components',
-    'list_flux_layouts',
-    'list_flux_component_icons'
-  ];
-
-  test('server defines all 4 expected tools', () => {
-    // This validates the tool count matches documentation
-    assert.strictEqual(expectedTools.length, 4);
+  test('exports exactly 4 tools', () => {
+    assert.strictEqual(TOOL_DEFINITIONS.length, 4);
   });
 
-  describe('fetch_flux_docs tool', () => {
-    test('has correct schema structure', () => {
-      const schema = {
-        name: 'fetch_flux_docs',
-        description: 'Fetch documentation for Livewire Flux components or layouts from fluxui.dev',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            component: {
-              type: 'string',
-              description: 'The component name or path to fetch documentation for (optional)',
-            },
-            layout: {
-              type: 'string',
-              description: 'The layout name to fetch documentation for (e.g., "header", "sidebar") (optional)',
-            },
-            search: {
-              type: 'string',
-              description: 'Search term to find specific documentation (optional)',
-            },
-          },
-        },
-      };
+  test('each tool has name, description, inputSchema.type=object', () => {
+    for (const tool of TOOL_DEFINITIONS) {
+      assert.ok(typeof tool.name === 'string' && tool.name.length > 0);
+      assert.ok(typeof tool.description === 'string' && tool.description.length > 0);
+      assert.strictEqual(tool.inputSchema.type, 'object');
+      assert.ok(typeof tool.inputSchema.properties === 'object');
+    }
+  });
 
-      assert.strictEqual(schema.name, 'fetch_flux_docs');
-      assert.strictEqual(schema.inputSchema.type, 'object');
-      assert.ok(schema.inputSchema.properties.component);
-      assert.ok(schema.inputSchema.properties.layout);
-      assert.ok(schema.inputSchema.properties.search);
+  describe('fetch_flux_docs', () => {
+    const tool = byName('fetch_flux_docs');
+
+    test('exists', () => {
+      assert.ok(tool, 'fetch_flux_docs tool must be defined');
     });
 
-    test('all parameters are optional', () => {
-      // Test that tool can be called with no parameters
-      const validCalls = [
-        {},
-        { component: 'button' },
-        { layout: 'header' },
-        { search: 'form' },
-        { component: 'input', search: 'validation' }
-      ];
+    test('has component, layout, search properties (all optional)', () => {
+      assert.ok(tool.inputSchema.properties.component);
+      assert.ok(tool.inputSchema.properties.layout);
+      assert.ok(tool.inputSchema.properties.search);
+      assert.strictEqual(tool.inputSchema.required, undefined);
+    });
 
-      validCalls.forEach(params => {
-        // In real implementation, these would be valid
-        assert.ok(typeof params === 'object');
-      });
+    test('all three params are strings', () => {
+      assert.strictEqual(tool.inputSchema.properties.component.type, 'string');
+      assert.strictEqual(tool.inputSchema.properties.layout.type, 'string');
+      assert.strictEqual(tool.inputSchema.properties.search.type, 'string');
     });
   });
 
-  describe('list_flux_components tool', () => {
-    test('has correct schema structure', () => {
-      const schema = {
-        name: 'list_flux_components',
-        description: 'List all available Flux components from the documentation',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      };
+  describe('list_flux_components', () => {
+    const tool = byName('list_flux_components');
 
-      assert.strictEqual(schema.name, 'list_flux_components');
-      assert.strictEqual(schema.inputSchema.type, 'object');
-      assert.strictEqual(Object.keys(schema.inputSchema.properties).length, 0);
+    test('exists', () => {
+      assert.ok(tool);
     });
 
-    test('accepts no parameters', () => {
-      const params = {};
-      assert.strictEqual(Object.keys(params).length, 0);
+    test('takes no parameters', () => {
+      assert.strictEqual(Object.keys(tool.inputSchema.properties).length, 0);
     });
   });
 
-  describe('list_flux_layouts tool', () => {
-    test('has correct schema structure', () => {
-      const schema = {
-        name: 'list_flux_layouts',
-        description: 'List all available Flux layouts from the documentation',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      };
+  describe('list_flux_layouts', () => {
+    const tool = byName('list_flux_layouts');
 
-      assert.strictEqual(schema.name, 'list_flux_layouts');
-      assert.strictEqual(schema.inputSchema.type, 'object');
+    test('exists', () => {
+      assert.ok(tool);
+    });
+
+    test('takes no parameters', () => {
+      assert.strictEqual(Object.keys(tool.inputSchema.properties).length, 0);
     });
   });
 
-  describe('list_flux_component_icons tool', () => {
-    test('has correct schema structure', () => {
-      const schema = {
-        name: 'list_flux_component_icons',
-        description: 'List all available Heroicons for use with flux:icon component, with variants and usage examples',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            variant: {
-              type: 'string',
-              enum: ['outline', 'solid', 'mini', 'micro'],
-              description: 'Filter icons by variant (optional)',
-            },
-            search: {
-              type: 'string',
-              description: 'Search term to filter icon names (optional)',
-            },
-          },
-        },
-      };
+  describe('list_flux_component_icons', () => {
+    const tool = byName('list_flux_component_icons');
 
-      assert.strictEqual(schema.name, 'list_flux_component_icons');
-      assert.ok(schema.inputSchema.properties.variant);
-      assert.ok(schema.inputSchema.properties.search);
+    test('exists', () => {
+      assert.ok(tool);
     });
 
-    test('variant parameter accepts valid enum values', () => {
-      const validVariants = ['outline', 'solid', 'mini', 'micro'];
-
-      validVariants.forEach(variant => {
-        assert.ok(['outline', 'solid', 'mini', 'micro'].includes(variant));
-      });
+    test('variant enum is exactly the four supported variants', () => {
+      assert.deepStrictEqual(
+        tool.inputSchema.properties.variant.enum,
+        ['outline', 'solid', 'mini', 'micro']
+      );
     });
 
-    test('parameters are optional', () => {
-      const validCalls = [
-        {},
-        { variant: 'outline' },
-        { search: 'arrow' },
-        { variant: 'solid', search: 'user' }
-      ];
-
-      validCalls.forEach(params => {
-        assert.ok(typeof params === 'object');
-      });
-    });
-  });
-
-  describe('MCP Response Format', () => {
-    test('responses follow MCP content format', () => {
-      const validResponse = {
-        content: [
-          {
-            type: 'text',
-            text: 'Sample documentation content'
-          }
-        ]
-      };
-
-      assert.ok(Array.isArray(validResponse.content));
-      assert.strictEqual(validResponse.content[0].type, 'text');
-      assert.ok(typeof validResponse.content[0].text === 'string');
-    });
-
-    test('error responses follow MCP format', () => {
-      const errorResponse = {
-        content: [
-          {
-            type: 'text',
-            text: 'Error: Failed to fetch documentation'
-          }
-        ]
-      };
-
-      assert.ok(Array.isArray(errorResponse.content));
-      assert.ok(errorResponse.content[0].text.startsWith('Error:'));
+    test('search property is a string', () => {
+      assert.strictEqual(tool.inputSchema.properties.search.type, 'string');
     });
   });
 });
