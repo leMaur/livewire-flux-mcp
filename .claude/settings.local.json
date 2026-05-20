@@ -10,7 +10,8 @@
       "Bash(claude mcp:*)",
       "Bash(claude plugin:*)",
       "Bash(npm test:*)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "mcp__claude_ai_Context7__resolve-library-id"
     ],
     "deny": []
   }
