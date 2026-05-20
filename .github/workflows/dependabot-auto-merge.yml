@@ -14,12 +14,12 @@ jobs:
 
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v3.1.0
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0 (resolved 2026-05-20)
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Wait for Test workflow to succeed
-        uses: lewagon/wait-on-check-action@v1.3.4
+        uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4 (resolved 2026-05-20)
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           check-name: test
