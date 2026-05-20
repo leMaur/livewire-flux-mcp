@@ -2,6 +2,22 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.2.1 - 2026-05-20
+
+### What's Changed
+
+* security: land 11 of 14 pentest findings (CRITICAL F-INJECT1 + 10 others) by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/47
+* security: close remaining 3 pentest findings (F-SSRF1 F-DOS2 F-INFO1) by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/48
+* ci: open PR instead of direct push for CHANGELOG updates by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/49
+
+#### Note on versioning
+
+Supersedes the failed `v2.2.0` release (the publish workflow was blocked by `Publishing`-environment policy that excluded tag refs, and the changelog workflow was blocked by `main` branch protection forbidding direct pushes). Both root causes are fixed: env policy now accepts tag refs via custom branch policies (`v*`, `[0-9]*.[0-9]*.[0-9]*`); changelog workflow now opens a PR via `peter-evans/create-pull-request@v7`. F-SC1 required-reviewer + F-SC4 branch protection both preserved.
+
+The published package payload is byte-identical to what `v2.2.0` was supposed to ship (the `.github/` workflow change is not part of the npm tarball).
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.18...2.2.1
+
 ## 2.1.18 - 2026-05-20
 
 ### What's Changed
