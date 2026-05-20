@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+
+# Local-only Claude Code state (untracked; see .claude/settings.json for shared hooks)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
