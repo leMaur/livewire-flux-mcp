@@ -39,6 +39,21 @@ function isolateUntrustedContent(text) {
   );
 }
 
+// Defense-in-depth: scrub internal hosts/paths from error messages before they
+// reach the MCP client (and ultimately the LLM context). Intentionally simple —
+// covers the common shapes Node's fetch / net errors produce (ECONNREFUSED,
+// getaddrinfo, ENOENT with absolute paths). Not a PII redactor.
+export function sanitizeErrorMessage(msg) {
+  if (typeof msg !== 'string') return String(msg);
+  return msg
+    // IPv4 address with optional :port
+    .replace(/\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b/g, '<redacted-host>')
+    // IPv6 address (lazy — covers ::1, fe80::..., 2001:db8::1, etc.)
+    .replace(/\b[0-9a-fA-F:]{2,}::[0-9a-fA-F:]{0,}\b/g, '<redacted-host>')
+    // Absolute filesystem paths likely to identify the host
+    .replace(/(\/(?:Users|home|root|var|tmp|opt|etc)\/[^\s'"\\]+)/g, '<redacted-path>');
+}
+
 export const TOOL_DEFINITIONS = [
   {
     name: 'fetch_flux_docs',
@@ -159,10 +174,38 @@ export class FluxDocumentationServer {
 
     this.fetch = fetchImpl;
     this.cache = new SimpleCache();
+    // F-DOS2: in-flight request dedup. Keyed by cache key; collapses concurrent
+    // cold-cache work so N parallel callers share one upstream fetch.
+    this.pendingFetches = new Map();
     this.setupToolHandlers();
   }
 
-  async fetchWithTimeout(url, { headers = {}, timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
+  // F-DOS2 helper: single-flight wrapper around (cache-check + producer + cache-set).
+  // If the value is cached, return it. Else, if a producer is already running for
+  // this key, await its result. Else, kick off the producer, register it as
+  // pending, cache its success, and clean up the pending slot in `finally`.
+  async withSingleFlight(cacheKey, asyncFn) {
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const inflight = this.pendingFetches.get(cacheKey);
+    if (inflight) return inflight;
+
+    const promise = (async () => {
+      try {
+        const result = await asyncFn();
+        this.cache.set(cacheKey, result);
+        return result;
+      } finally {
+        this.pendingFetches.delete(cacheKey);
+      }
+    })();
+
+    this.pendingFetches.set(cacheKey, promise);
+    return promise;
+  }
+
+  async fetchWithTimeout(url, { headers = {}, timeoutMs = REQUEST_TIMEOUT_MS, allowedHosts = [] } = {}) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -171,6 +214,26 @@ export class FluxDocumentationServer {
         headers: { 'User-Agent': USER_AGENT, ...headers },
         signal: controller.signal,
       });
+
+      // F-SSRF1: if the response's final URL (post-redirect) is outside the
+      // declared allowlist, refuse to surface it. `response.url` is populated by
+      // WHATWG fetch implementations (undici, browsers); test mocks may omit
+      // it, in which case we treat it as same-origin (no redirect detected).
+      if (allowedHosts.length > 0 && typeof response.url === 'string' && response.url.length > 0) {
+        let finalHost;
+        try {
+          finalHost = new URL(response.url).hostname;
+        } catch {
+          throw new Error('Refused cross-host redirect: final URL is not parseable');
+        }
+        const allowed = allowedHosts.some((h) => finalHost === h || finalHost.endsWith(`.${h}`));
+        if (!allowed) {
+          // Do NOT include user-controlled input verbatim; only the resolved final URL,
+          // which is bounded by our allowlist decision above.
+          throw new Error(`Refused cross-host redirect: ${response.url}`);
+        }
+      }
+
       const cl = response.headers?.get?.('content-length');
       if (cl && Number(cl) > MAX_RESPONSE_BYTES) {
         throw new Error(`Response body exceeds ${MAX_RESPONSE_BYTES} bytes (content-length=${cl}): ${url}`);
@@ -213,7 +276,7 @@ export class FluxDocumentationServer {
           content: [
             {
               type: 'text',
-              text: `Error: ${error.message}`,
+              text: `Error: ${sanitizeErrorMessage(error.message)}`,
             },
           ],
         };
@@ -241,89 +304,80 @@ export class FluxDocumentationServer {
       // Create cache key based on URL and search parameter
       const cacheKey = `docs:${encodeURIComponent(url)}:${encodeURIComponent(search || '')}`;
 
-      // Check cache first
-      const cached = this.cache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const response = await this.fetchWithTimeout(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Extract main content
-      const content = $('main, .prose, .documentation, .content').first();
-      let text = '';
-
-      if (content.length > 0) {
-        text = content.text().trim();
-      } else {
-        // Fallback to body content
-        text = $('body').text().trim();
-      }
-
-      // Extract reference section if component is specified
-      let referenceText = '';
-      if (component || layout) {
-        // Look for reference section by ID or heading
-        const referenceSection = $('#reference, h2:contains("Reference"), h3:contains("Reference")').next();
-        if (referenceSection.length > 0) {
-          referenceText = referenceSection.text().trim();
-        } else {
-          // Alternative approach: look for content after "Reference" heading
-          $('h1, h2, h3, h4').each((i, el) => {
-            const headingText = $(el).text().toLowerCase();
-            if (headingText.includes('reference')) {
-              let nextElement = $(el).next();
-              let sectionContent = '';
-
-              // Collect content until next heading or end
-              while (nextElement.length > 0 && !nextElement.is('h1, h2, h3, h4')) {
-                sectionContent += nextElement.text().trim() + '\n';
-                nextElement = nextElement.next();
-              }
-
-              if (sectionContent.trim()) {
-                referenceText = sectionContent.trim();
-                return false; // Break the loop
-              }
-            }
-          });
+      return await this.withSingleFlight(cacheKey, async () => {
+        const response = await this.fetchWithTimeout(url, { allowedHosts: ['fluxui.dev'] });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      }
 
-      // Combine main content with reference section
-      let combinedText = text;
-      if (referenceText) {
-        combinedText = `${text}\n\n--- REFERENCE SECTION ---\n\n${referenceText}`;
-      }
+        const html = await response.text();
+        const $ = cheerio.load(html);
 
-      // If search term is provided, filter content
-      if (search) {
-        const lines = combinedText.split('\n');
-        const filteredLines = lines.filter(line =>
-          line.toLowerCase().includes(search.toLowerCase())
-        );
-        combinedText = filteredLines.join('\n');
-      }
+        // Extract main content
+        const content = $('main, .prose, .documentation, .content').first();
+        let text = '';
 
-      const result = {
-        content: [
-          {
-            type: 'text',
-            text: `Documentation from ${url}:\n\n${isolateUntrustedContent(combinedText)}`,
-          },
-        ],
-      };
+        if (content.length > 0) {
+          text = content.text().trim();
+        } else {
+          // Fallback to body content
+          text = $('body').text().trim();
+        }
 
-      // Cache the result
-      this.cache.set(cacheKey, result);
+        // Extract reference section if component is specified
+        let referenceText = '';
+        if (component || layout) {
+          // Look for reference section by ID or heading
+          const referenceSection = $('#reference, h2:contains("Reference"), h3:contains("Reference")').next();
+          if (referenceSection.length > 0) {
+            referenceText = referenceSection.text().trim();
+          } else {
+            // Alternative approach: look for content after "Reference" heading
+            $('h1, h2, h3, h4').each((i, el) => {
+              const headingText = $(el).text().toLowerCase();
+              if (headingText.includes('reference')) {
+                let nextElement = $(el).next();
+                let sectionContent = '';
 
-      return result;
+                // Collect content until next heading or end
+                while (nextElement.length > 0 && !nextElement.is('h1, h2, h3, h4')) {
+                  sectionContent += nextElement.text().trim() + '\n';
+                  nextElement = nextElement.next();
+                }
+
+                if (sectionContent.trim()) {
+                  referenceText = sectionContent.trim();
+                  return false; // Break the loop
+                }
+              }
+            });
+          }
+        }
+
+        // Combine main content with reference section
+        let combinedText = text;
+        if (referenceText) {
+          combinedText = `${text}\n\n--- REFERENCE SECTION ---\n\n${referenceText}`;
+        }
+
+        // If search term is provided, filter content
+        if (search) {
+          const lines = combinedText.split('\n');
+          const filteredLines = lines.filter(line =>
+            line.toLowerCase().includes(search.toLowerCase())
+          );
+          combinedText = filteredLines.join('\n');
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Documentation from ${url}:\n\n${isolateUntrustedContent(combinedText)}`,
+            },
+          ],
+        };
+      });
     } catch (error) {
       throw new Error(`Failed to fetch documentation: ${error.message}`);
     }
@@ -333,53 +387,44 @@ export class FluxDocumentationServer {
     try {
       const cacheKey = 'components:list';
 
-      // Check cache first
-      const cached = this.cache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const response = await this.fetchWithTimeout('https://fluxui.dev/docs');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Look for component links with /components/ prefix
-      const links = [];
-      $('a').each((i, el) => {
-        const href = $(el).attr('href');
-        const text = $(el).text().trim();
-
-        // Filter for links that start with https://fluxui.dev/components/
-        if (href && text && href.startsWith('https://fluxui.dev/components/') && !links.some(l => l.href === href)) {
-          links.push({
-            name: text,
-            href: href,
-            path: href.replace('https://fluxui.dev/components/', '')
-          });
+      return await this.withSingleFlight(cacheKey, async () => {
+        const response = await this.fetchWithTimeout('https://fluxui.dev/docs', { allowedHosts: ['fluxui.dev'] });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        // Look for component links with /components/ prefix
+        const links = [];
+        $('a').each((i, el) => {
+          const href = $(el).attr('href');
+          const text = $(el).text().trim();
+
+          // Filter for links that start with https://fluxui.dev/components/
+          if (href && text && href.startsWith('https://fluxui.dev/components/') && !links.some(l => l.href === href)) {
+            links.push({
+              name: text,
+              href: href,
+              path: href.replace('https://fluxui.dev/components/', '')
+            });
+          }
+        });
+
+        const componentsList = links
+          .map(link => `- ${link.name} (${link.path})`)
+          .join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Available Flux Components:\n\n${componentsList}`,
+            },
+          ],
+        };
       });
-
-      const componentsList = links
-        .map(link => `- ${link.name} (${link.path})`)
-        .join('\n');
-
-      const result = {
-        content: [
-          {
-            type: 'text',
-            text: `Available Flux Components:\n\n${componentsList}`,
-          },
-        ],
-      };
-
-      // Cache the result
-      this.cache.set(cacheKey, result);
-
-      return result;
     } catch (error) {
       throw new Error(`Failed to list components: ${error.message}`);
     }
@@ -389,53 +434,44 @@ export class FluxDocumentationServer {
     try {
       const cacheKey = 'layouts:list';
 
-      // Check cache first
-      const cached = this.cache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const response = await this.fetchWithTimeout('https://fluxui.dev/layouts');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Look for layout links with /layouts/ prefix
-      const links = [];
-      $('a').each((i, el) => {
-        const href = $(el).attr('href');
-        const text = $(el).text().trim();
-
-        // Filter for links that start with https://fluxui.dev/layouts/
-        if (href && text && href.startsWith('https://fluxui.dev/layouts/') && !links.some(l => l.href === href)) {
-          links.push({
-            name: text,
-            href: href,
-            path: href.replace('https://fluxui.dev/layouts/', '')
-          });
+      return await this.withSingleFlight(cacheKey, async () => {
+        const response = await this.fetchWithTimeout('https://fluxui.dev/layouts', { allowedHosts: ['fluxui.dev'] });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        // Look for layout links with /layouts/ prefix
+        const links = [];
+        $('a').each((i, el) => {
+          const href = $(el).attr('href');
+          const text = $(el).text().trim();
+
+          // Filter for links that start with https://fluxui.dev/layouts/
+          if (href && text && href.startsWith('https://fluxui.dev/layouts/') && !links.some(l => l.href === href)) {
+            links.push({
+              name: text,
+              href: href,
+              path: href.replace('https://fluxui.dev/layouts/', '')
+            });
+          }
+        });
+
+        const layoutsList = links
+          .map(link => `- ${link.name} (${link.path})`)
+          .join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Available Flux Layouts:\n\n${layoutsList}`,
+            },
+          ],
+        };
       });
-
-      const layoutsList = links
-        .map(link => `- ${link.name} (${link.path})`)
-        .join('\n');
-
-      const result = {
-        content: [
-          {
-            type: 'text',
-            text: `Available Flux Layouts:\n\n${layoutsList}`,
-          },
-        ],
-      };
-
-      // Cache the result
-      this.cache.set(cacheKey, result);
-
-      return result;
     } catch (error) {
       throw new Error(`Failed to list layouts: ${error.message}`);
     }
@@ -446,97 +482,91 @@ export class FluxDocumentationServer {
       // Create cache key based on variant and search parameters
       const cacheKey = `icons:${encodeURIComponent(variant || 'all')}:${encodeURIComponent(search || '')}`;
 
-      // Check cache first
-      const cached = this.cache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const variants = {
-        outline: {
-          path: '24/outline',
-          size: '24px',
-          style: 'outline',
-          usage: '<flux:icon.{name} />'
-        },
-        solid: {
-          path: '24/solid',
-          size: '24px',
-          style: 'solid',
-          usage: '<flux:icon.{name} variant="solid" />'
-        },
-        mini: {
-          path: '20/solid',
-          size: '20px',
-          style: 'solid',
-          usage: '<flux:icon.{name} variant="mini" />'
-        },
-        micro: {
-          path: '16/solid',
-          size: '16px',
-          style: 'solid',
-          usage: '<flux:icon.{name} variant="micro" />'
-        }
-      };
-
-      const variantsToFetch = variant ? [variant] : Object.keys(variants);
-      const allIcons = {};
-
-      for (const variantName of variantsToFetch) {
-        const variantConfig = variants[variantName];
-        const url = `https://api.github.com/repos/tailwindlabs/heroicons/contents/optimized/${variantConfig.path}`;
-
-        const response = await this.fetchWithTimeout(url, { headers: githubAuthHeaders() });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${variantName} icons: ${response.status}`);
-        }
-
-        const files = await response.json();
-        const iconNames = files
-          .filter(file => file.name.endsWith('.svg'))
-          .map(file => file.name.slice(0, -4))
-          .filter(name => !search || name.toLowerCase().includes(search.toLowerCase()));
-
-        allIcons[variantName] = {
-          config: variantConfig,
-          icons: iconNames
-        };
-      }
-
-      let result = 'Available Heroicons for flux:icon component:\n\n';
-
-      for (const [variantName, data] of Object.entries(allIcons)) {
-        const { config, icons } = data;
-        result += `## ${variantName.toUpperCase()} (${config.size} ${config.style})\n`;
-        result += `Usage: ${config.usage}\n`;
-        result += `GitHub: https://github.com/tailwindlabs/heroicons/tree/master/optimized/${config.path}\n\n`;
-
-        if (icons.length === 0) {
-          result += `No icons found${search ? ` matching "${search}"` : ''}.\n\n`;
-        } else {
-          result += `Icons (${icons.length}):\n`;
-          const iconList = icons.map(name => `  • ${name}`).join('\n');
-          result += `${iconList}\n\n`;
-        }
-      }
-
-      if (search) {
-        result += `\nFiltered by: "${search}"\n`;
-      }
-
-      const finalResult = {
-        content: [
-          {
-            type: 'text',
-            text: isolateUntrustedContent(result),
+      return await this.withSingleFlight(cacheKey, async () => {
+        const variants = {
+          outline: {
+            path: '24/outline',
+            size: '24px',
+            style: 'outline',
+            usage: '<flux:icon.{name} />'
           },
-        ],
-      };
+          solid: {
+            path: '24/solid',
+            size: '24px',
+            style: 'solid',
+            usage: '<flux:icon.{name} variant="solid" />'
+          },
+          mini: {
+            path: '20/solid',
+            size: '20px',
+            style: 'solid',
+            usage: '<flux:icon.{name} variant="mini" />'
+          },
+          micro: {
+            path: '16/solid',
+            size: '16px',
+            style: 'solid',
+            usage: '<flux:icon.{name} variant="micro" />'
+          }
+        };
 
-      // Cache the result
-      this.cache.set(cacheKey, finalResult);
+        const variantsToFetch = variant ? [variant] : Object.keys(variants);
+        const allIcons = {};
 
-      return finalResult;
+        for (const variantName of variantsToFetch) {
+          const variantConfig = variants[variantName];
+          const url = `https://api.github.com/repos/tailwindlabs/heroicons/contents/optimized/${variantConfig.path}`;
+
+          const response = await this.fetchWithTimeout(url, {
+            headers: githubAuthHeaders(),
+            allowedHosts: ['api.github.com'],
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${variantName} icons: ${response.status}`);
+          }
+
+          const files = await response.json();
+          const iconNames = files
+            .filter(file => file.name.endsWith('.svg'))
+            .map(file => file.name.slice(0, -4))
+            .filter(name => !search || name.toLowerCase().includes(search.toLowerCase()));
+
+          allIcons[variantName] = {
+            config: variantConfig,
+            icons: iconNames
+          };
+        }
+
+        let result = 'Available Heroicons for flux:icon component:\n\n';
+
+        for (const [variantName, data] of Object.entries(allIcons)) {
+          const { config, icons } = data;
+          result += `## ${variantName.toUpperCase()} (${config.size} ${config.style})\n`;
+          result += `Usage: ${config.usage}\n`;
+          result += `GitHub: https://github.com/tailwindlabs/heroicons/tree/master/optimized/${config.path}\n\n`;
+
+          if (icons.length === 0) {
+            result += `No icons found${search ? ` matching "${search}"` : ''}.\n\n`;
+          } else {
+            result += `Icons (${icons.length}):\n`;
+            const iconList = icons.map(name => `  • ${name}`).join('\n');
+            result += `${iconList}\n\n`;
+          }
+        }
+
+        if (search) {
+          result += `\nFiltered by: "${search}"\n`;
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: isolateUntrustedContent(result),
+            },
+          ],
+        };
+      });
     } catch (error) {
       throw new Error(`Failed to list icons: ${error.message}`);
     }
