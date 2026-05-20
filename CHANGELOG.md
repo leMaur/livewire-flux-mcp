@@ -2,6 +2,21 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.1.18 - 2026-05-20
+
+### What's Changed
+
+* chore(deps): Bump hono from 4.12.12 to 4.12.14 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/39
+* chore(deps): Bump npm-check-updates from 20.0.0 to 20.0.2 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/40
+* chore(deps): Bump dependabot/fetch-metadata from 3.0.0 to 3.1.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/41
+* chore(deps): Bump hono from 4.12.14 to 4.12.18 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/42
+* chore(deps): Bump fast-uri from 3.1.0 to 3.1.2 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/43
+* test+ci: real tests against index.js, gated by new Test workflow by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/44
+* deps: drop node-fetch, move npm-check-updates to dev, declare engines by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/45
+* harden: timeout + User-Agent + optional GITHUB_TOKEN + isError on errors by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/46
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.1.17...2.1.18
+
 ## 2.1.17 - 2026-04-09
 
 ### What's Changed
