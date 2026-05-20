@@ -18,6 +18,15 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Wait for Test workflow to succeed
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: test
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 20
+          allowed-conclusions: success
+
       - name: Auto-merge Dependabot PRs for semver-minor updates
         if: ${{steps.metadata.outputs.update-type == 'version-update:semver-minor'}}
         run: gh pr merge --auto --squash "$PR_URL"

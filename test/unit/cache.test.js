@@ -1,36 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
-
-// Simple cache implementation for testing
-class SimpleCache {
-  constructor(ttlMs = 24 * 60 * 60 * 1000) {
-    this.cache = new Map();
-    this.ttl = ttlMs;
-  }
-
-  get(key) {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-
-    if (Date.now() - entry.timestamp > this.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return entry.data;
-  }
-
-  set(key, data) {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
-  }
-
-  clear() {
-    this.cache.clear();
-  }
-}
+import { SimpleCache } from '../../index.js';
 
 describe('SimpleCache', () => {
   test('stores and retrieves data', () => {
