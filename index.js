@@ -106,7 +106,7 @@ export class SimpleCache {
 }
 
 export class FluxDocumentationServer {
-  constructor({ fetch: fetchImpl = defaultFetch } = {}) {
+  constructor({ fetch: fetchImpl = globalThis.fetch } = {}) {
     this.server = new Server(
       {
         name: 'livewire-flux-mcp',
