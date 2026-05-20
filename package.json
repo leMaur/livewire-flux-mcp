@@ -30,6 +30,13 @@
     "url": "https://github.com/leMaur/livewire-flux-mcp/issues"
   },
   "homepage": "https://github.com/leMaur/livewire-flux-mcp#readme",
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE.md",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=20"
   },
