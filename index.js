@@ -6,7 +6,6 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import defaultFetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -116,7 +115,7 @@ export class SimpleCache {
 }
 
 export class FluxDocumentationServer {
-  constructor({ fetch: fetchImpl = defaultFetch } = {}) {
+  constructor({ fetch: fetchImpl = globalThis.fetch } = {}) {
     this.server = new Server(
       {
         name: 'livewire-flux-mcp',
