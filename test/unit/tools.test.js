@@ -25,17 +25,34 @@ describe('MCP Tool Schemas', () => {
       assert.ok(tool, 'fetch_flux_docs tool must be defined');
     });
 
-    test('has component, layout, search properties (all optional)', () => {
+    test('has component, layout, and version properties (all optional)', () => {
       assert.ok(tool.inputSchema.properties.component);
       assert.ok(tool.inputSchema.properties.layout);
-      assert.ok(tool.inputSchema.properties.search);
+      assert.ok(tool.inputSchema.properties.version);
       assert.strictEqual(tool.inputSchema.required, undefined);
     });
 
-    test('all three params are strings', () => {
+    test('component, layout, and version params are strings', () => {
       assert.strictEqual(tool.inputSchema.properties.component.type, 'string');
       assert.strictEqual(tool.inputSchema.properties.layout.type, 'string');
-      assert.strictEqual(tool.inputSchema.properties.search.type, 'string');
+      assert.strictEqual(tool.inputSchema.properties.version.type, 'string');
+    });
+
+    test('search property is preserved as a deprecated no-op (semver compat)', () => {
+      // Removing the arg outright would be a breaking change for 2.2.x clients.
+      // It is accepted-but-ignored at the handler level until 3.0.
+      assert.ok(tool.inputSchema.properties.search);
+      assert.match(
+        tool.inputSchema.properties.search.description,
+        /deprecated/i
+      );
+    });
+
+    test('version enum is exactly v1 and v2', () => {
+      assert.deepStrictEqual(
+        tool.inputSchema.properties.version.enum,
+        ['v1', 'v2']
+      );
     });
   });
 
@@ -46,8 +63,16 @@ describe('MCP Tool Schemas', () => {
       assert.ok(tool);
     });
 
-    test('takes no parameters', () => {
-      assert.strictEqual(Object.keys(tool.inputSchema.properties).length, 0);
+    test('has version and tier properties', () => {
+      assert.ok(tool.inputSchema.properties.version);
+      assert.ok(tool.inputSchema.properties.tier);
+    });
+
+    test('tier enum is exactly free, pro, all', () => {
+      assert.deepStrictEqual(
+        tool.inputSchema.properties.tier.enum,
+        ['free', 'pro', 'all']
+      );
     });
   });
 
@@ -58,8 +83,12 @@ describe('MCP Tool Schemas', () => {
       assert.ok(tool);
     });
 
-    test('takes no parameters', () => {
-      assert.strictEqual(Object.keys(tool.inputSchema.properties).length, 0);
+    test('has a version property', () => {
+      assert.ok(tool.inputSchema.properties.version);
+      assert.deepStrictEqual(
+        tool.inputSchema.properties.version.enum,
+        ['v1', 'v2']
+      );
     });
   });
 

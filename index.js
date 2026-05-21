@@ -21,6 +21,28 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const USER_AGENT = `livewire-flux-mcp/${pkg.version} (+https://github.com/leMaur/livewire-flux-mcp)`;
 const MAX_RESPONSE_CHARS = 50_000;
 const MAX_RESPONSE_BYTES = 5_000_000;
+const FLUX_ALLOWED_HOSTS = ['fluxui.dev', 'v1.fluxui.dev'];
+// Bump this when the cached value shape changes (e.g., we add a new annotation,
+// change the Pro-notice format, alter the listing schema). Older cached payloads
+// under prior schemas will simply be ignored — never deserialized into new code.
+const CACHE_SCHEMA_VERSION = 's2';
+const PRO_COMPONENT_FALLBACK = [
+  'accordion',
+  'autocomplete',
+  'calendar',
+  'chart',
+  'command',
+  'context',
+  'date-picker',
+  'editor',
+  'listbox',
+  'combobox',
+  'tabs',
+  'file-upload',
+  'time-picker',
+  'kanban',
+  'slider',
+];
 
 function githubAuthHeaders() {
   return process.env.GITHUB_TOKEN
@@ -54,6 +76,17 @@ export function sanitizeErrorMessage(msg) {
     .replace(/(\/(?:Users|home|root|var|tmp|opt|etc)\/[^\s'"\\]+)/g, '<redacted-path>');
 }
 
+export function getBaseUrl(version) {
+  return version === 'v1' ? 'https://v1.fluxui.dev' : 'https://fluxui.dev';
+}
+
+function formatFluxComponentLabel(slug) {
+  return slug
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 export const TOOL_DEFINITIONS = [
   {
     name: 'fetch_flux_docs',
@@ -73,9 +106,14 @@ export const TOOL_DEFINITIONS = [
           maxLength: 100,
           pattern: '^[a-zA-Z0-9-_]*$',
         },
+        version: {
+          type: 'string',
+          enum: ['v1', 'v2'],
+          description: 'Flux major version to target (default v2)',
+        },
         search: {
           type: 'string',
-          description: 'Search term to find specific documentation (optional)',
+          description: 'DEPRECATED — accepted but ignored. Will be removed in 3.0. Filter the returned text client-side instead.',
           maxLength: 200,
         },
       },
@@ -86,7 +124,18 @@ export const TOOL_DEFINITIONS = [
     description: 'List all available Flux components from the documentation',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        version: {
+          type: 'string',
+          enum: ['v1', 'v2'],
+          description: 'Flux major version to target (default v2)',
+        },
+        tier: {
+          type: 'string',
+          enum: ['free', 'pro', 'all'],
+          description: 'Filter components by paid tier (default all)',
+        },
+      },
     },
   },
   {
@@ -94,7 +143,13 @@ export const TOOL_DEFINITIONS = [
     description: 'List all available Flux layouts from the documentation',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        version: {
+          type: 'string',
+          enum: ['v1', 'v2'],
+          description: 'Flux major version to target (default v2)',
+        },
+      },
     },
   },
   {
@@ -214,6 +269,9 @@ export class FluxDocumentationServer {
         headers: { 'User-Agent': USER_AGENT, ...headers },
         signal: controller.signal,
       });
+      if (!response || typeof response.ok !== 'boolean' || typeof response.status !== 'number') {
+        throw new Error(`Invalid response object for ${url}`);
+      }
 
       // F-SSRF1: if the response's final URL (post-redirect) is outside the
       // declared allowlist, refuse to surface it. `response.url` is populated by
@@ -260,11 +318,13 @@ export class FluxDocumentationServer {
       try {
         switch (name) {
           case 'fetch_flux_docs':
-            return await this.fetchFluxDocs(args.component, args.layout, args.search);
+            // `args.search` is deprecated (2.3.0) — accepted for backward compatibility
+            // with 2.2.x clients but intentionally ignored. Scheduled for removal in 3.0.
+            return await this.fetchFluxDocs(args.component, args.layout, args.version);
           case 'list_flux_components':
-            return await this.listFluxComponents();
+            return await this.listFluxComponents(args.version, args.tier);
           case 'list_flux_layouts':
-            return await this.listFluxLayouts();
+            return await this.listFluxLayouts(args.version);
           case 'list_flux_component_icons':
             return await this.listFluxComponentIcons(args.variant, args.search);
           default:
@@ -284,62 +344,56 @@ export class FluxDocumentationServer {
     });
   }
 
-  async fetchFluxDocs(component, layout, search) {
+  async fetchFluxDocs(component, layout, version) {
     try {
+      const baseUrl = getBaseUrl(version);
       let url;
 
       if (layout) {
-        // Handle layout requests
-        url = `https://fluxui.dev/layouts/${layout}`;
+        url = `${baseUrl}/layouts/${layout}`;
       } else {
-        // Handle component requests (existing logic)
-        const baseUrl = 'https://fluxui.dev/components';
-        url = baseUrl;
-
+        url = `${baseUrl}/components`;
         if (component) {
-          url = `${baseUrl}/${component}`;
+          url = `${url}/${component}`;
         }
       }
 
-      // Create cache key based on URL and search parameter
-      const cacheKey = `docs:${encodeURIComponent(url)}:${encodeURIComponent(search || '')}`;
+      const cacheKey = `docs:${CACHE_SCHEMA_VERSION}:${version || 'v2'}:${encodeURIComponent(url)}`;
 
       return await this.withSingleFlight(cacheKey, async () => {
-        const response = await this.fetchWithTimeout(url, { allowedHosts: ['fluxui.dev'] });
+        const response = await this.fetchWithTimeout(url, { allowedHosts: FLUX_ALLOWED_HOSTS });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const html = await response.text();
-        const $ = cheerio.load(html);
+        if (typeof html !== 'string') {
+          throw new Error(`Invalid HTML response body for ${url}`);
+        }
 
-        // Extract main content
+        const $ = cheerio.load(html);
+        const isProComponent = html.includes('Flux Pro component');
         const content = $('main, .prose, .documentation, .content').first();
         let text = '';
 
         if (content.length > 0) {
           text = content.text().trim();
         } else {
-          // Fallback to body content
           text = $('body').text().trim();
         }
 
-        // Extract reference section if component is specified
         let referenceText = '';
         if (component || layout) {
-          // Look for reference section by ID or heading
           const referenceSection = $('#reference, h2:contains("Reference"), h3:contains("Reference")').next();
           if (referenceSection.length > 0) {
             referenceText = referenceSection.text().trim();
           } else {
-            // Alternative approach: look for content after "Reference" heading
             $('h1, h2, h3, h4').each((i, el) => {
               const headingText = $(el).text().toLowerCase();
               if (headingText.includes('reference')) {
                 let nextElement = $(el).next();
                 let sectionContent = '';
 
-                // Collect content until next heading or end
                 while (nextElement.length > 0 && !nextElement.is('h1, h2, h3, h4')) {
                   sectionContent += nextElement.text().trim() + '\n';
                   nextElement = nextElement.next();
@@ -347,33 +401,27 @@ export class FluxDocumentationServer {
 
                 if (sectionContent.trim()) {
                   referenceText = sectionContent.trim();
-                  return false; // Break the loop
+                  return false;
                 }
               }
             });
           }
         }
 
-        // Combine main content with reference section
         let combinedText = text;
         if (referenceText) {
           combinedText = `${text}\n\n--- REFERENCE SECTION ---\n\n${referenceText}`;
         }
 
-        // If search term is provided, filter content
-        if (search) {
-          const lines = combinedText.split('\n');
-          const filteredLines = lines.filter(line =>
-            line.toLowerCase().includes(search.toLowerCase())
-          );
-          combinedText = filteredLines.join('\n');
-        }
+        const proNotice = isProComponent
+          ? '[NOTICE] This is a Flux Pro component — requires a paid Flux license.\n\n'
+          : '';
 
         return {
           content: [
             {
               type: 'text',
-              text: `Documentation from ${url}:\n\n${isolateUntrustedContent(combinedText)}`,
+              text: `${proNotice}Documentation from ${url}:\n\n${isolateUntrustedContent(combinedText)}`,
             },
           ],
         };
@@ -383,37 +431,73 @@ export class FluxDocumentationServer {
     }
   }
 
-  async listFluxComponents() {
+  async listFluxComponents(version, tier) {
     try {
-      const cacheKey = 'components:list';
+      const normalizedVersion = version || 'v2';
+      const normalizedTier = tier || 'all';
+      const baseUrl = getBaseUrl(version);
+      const componentPrefix = `${baseUrl}/components/`;
+      const cacheKey = `components:${CACHE_SCHEMA_VERSION}:${normalizedVersion}:${normalizedTier}`;
 
       return await this.withSingleFlight(cacheKey, async () => {
-        const response = await this.fetchWithTimeout('https://fluxui.dev/docs', { allowedHosts: ['fluxui.dev'] });
+        const response = await this.fetchWithTimeout(`${baseUrl}/components`, { allowedHosts: FLUX_ALLOWED_HOSTS });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const html = await response.text();
-        const $ = cheerio.load(html);
+        if (typeof html !== 'string') {
+          throw new Error(`Invalid HTML response body for ${baseUrl}/components`);
+        }
 
-        // Look for component links with /components/ prefix
+        const $ = cheerio.load(html);
         const links = [];
         $('a').each((i, el) => {
           const href = $(el).attr('href');
           const text = $(el).text().trim();
+          let path = null;
 
-          // Filter for links that start with https://fluxui.dev/components/
-          if (href && text && href.startsWith('https://fluxui.dev/components/') && !links.some(l => l.href === href)) {
+          if (href && href.startsWith(componentPrefix)) {
+            path = href.slice(componentPrefix.length);
+          } else if (href && href.startsWith('/components/')) {
+            path = href.slice('/components/'.length);
+          }
+
+          if (href && text && path && !links.some(link => link.path === path)) {
             links.push({
               name: text,
-              href: href,
-              path: href.replace('https://fluxui.dev/components/', '')
+              href,
+              path,
             });
           }
         });
 
-        const componentsList = links
-          .map(link => `- ${link.name} (${link.path})`)
+        if (version === 'v1') {
+          const componentsList = links
+            .map(link => `- ${link.name} (${link.path})`)
+            .join('\n');
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Available Flux Components:\n\n${componentsList}\n\n(Pro tier annotation is not applicable on v1.)`,
+              },
+            ],
+          };
+        }
+
+        const proComponents = await this.getProComponents();
+        let filteredLinks = links;
+
+        if (normalizedTier === 'free') {
+          filteredLinks = links.filter(link => !proComponents.has(link.path));
+        } else if (normalizedTier === 'pro') {
+          filteredLinks = links.filter(link => proComponents.has(link.path));
+        }
+
+        const componentsList = filteredLinks
+          .map(link => `- ${link.name} [${proComponents.has(link.path) ? 'Pro' : 'Free'}] (${link.path})`)
           .join('\n');
 
         return {
@@ -430,31 +514,79 @@ export class FluxDocumentationServer {
     }
   }
 
-  async listFluxLayouts() {
-    try {
-      const cacheKey = 'layouts:list';
-
-      return await this.withSingleFlight(cacheKey, async () => {
-        const response = await this.fetchWithTimeout('https://fluxui.dev/layouts', { allowedHosts: ['fluxui.dev'] });
+  async getProComponents() {
+    return await this.withSingleFlight('pro-components:list', async () => {
+      try {
+        const response = await this.fetchWithTimeout(`${getBaseUrl('v2')}/pricing`, {
+          allowedHosts: FLUX_ALLOWED_HOSTS,
+        });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const html = await response.text();
-        const $ = cheerio.load(html);
+        if (typeof html !== 'string') {
+          throw new Error('Invalid HTML response body for pricing page');
+        }
 
-        // Look for layout links with /layouts/ prefix
+        const pageText = cheerio.load(html).text();
+        if (typeof pageText !== 'string') {
+          throw new Error('Invalid pricing page text content');
+        }
+
+        const detected = PRO_COMPONENT_FALLBACK.filter((slug) =>
+          pageText.includes(formatFluxComponentLabel(slug))
+        );
+
+        return new Set([...PRO_COMPONENT_FALLBACK, ...detected]);
+      } catch {
+        return new Set(PRO_COMPONENT_FALLBACK);
+      }
+    });
+  }
+
+  async listFluxLayouts(version) {
+    try {
+      if (version === 'v1') {
+        return {
+          content: [{ type: 'text', text: 'Flux layouts are not available in v1. Use version="v2" or upgrade your project to Flux v2.' }],
+        };
+      }
+
+      const normalizedVersion = version || 'v2';
+      const baseUrl = getBaseUrl(version);
+      const layoutPrefix = `${baseUrl}/layouts/`;
+      const cacheKey = `layouts:${CACHE_SCHEMA_VERSION}:${normalizedVersion}`;
+
+      return await this.withSingleFlight(cacheKey, async () => {
+        const response = await this.fetchWithTimeout(`${baseUrl}/layouts`, { allowedHosts: FLUX_ALLOWED_HOSTS });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const html = await response.text();
+        if (typeof html !== 'string') {
+          throw new Error(`Invalid HTML response body for ${baseUrl}/layouts`);
+        }
+
+        const $ = cheerio.load(html);
         const links = [];
         $('a').each((i, el) => {
           const href = $(el).attr('href');
           const text = $(el).text().trim();
+          let path = null;
 
-          // Filter for links that start with https://fluxui.dev/layouts/
-          if (href && text && href.startsWith('https://fluxui.dev/layouts/') && !links.some(l => l.href === href)) {
+          if (href && href.startsWith(layoutPrefix)) {
+            path = href.slice(layoutPrefix.length);
+          } else if (href && href.startsWith('/layouts/')) {
+            path = href.slice('/layouts/'.length);
+          }
+
+          if (href && text && path && !links.some(link => link.path === path)) {
             links.push({
               name: text,
-              href: href,
-              path: href.replace('https://fluxui.dev/layouts/', '')
+              href,
+              path,
             });
           }
         });
@@ -526,8 +658,11 @@ export class FluxDocumentationServer {
           }
 
           const files = await response.json();
+          if (!Array.isArray(files)) {
+            throw new Error(`Invalid icon listing response for ${variantName}`);
+          }
           const iconNames = files
-            .filter(file => file.name.endsWith('.svg'))
+            .filter(file => typeof file?.name === 'string' && file.name.endsWith('.svg'))
             .map(file => file.name.slice(0, -4))
             .filter(name => !search || name.toLowerCase().includes(search.toLowerCase()));
 
