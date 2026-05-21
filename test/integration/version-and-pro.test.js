@@ -60,8 +60,10 @@ describe('version routing', () => {
 
     assert.strictEqual(fetchSpy.mock.callCount(), 1);
     const url = fetchSpy.mock.calls[0].arguments[0];
+    // Trailing slash ensures we match the host exactly, not "v1.fluxui.dev.attacker.com"
+    // (CodeQL js/incomplete-url-substring-sanitization).
     assert.ok(
-      url.startsWith('https://v1.fluxui.dev'),
+      url.startsWith('https://v1.fluxui.dev/'),
       `expected v1 host, got ${url}`
     );
   });
