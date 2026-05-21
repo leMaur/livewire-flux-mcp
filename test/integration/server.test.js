@@ -67,19 +67,6 @@ describe('FluxDocumentationServer integration', () => {
       );
     });
 
-    test('filters by search term (case-insensitive)', async () => {
-      const server = buildServer(
-        mock.fn(async () =>
-          okText('<main>Button docs\nInput docs\nModal docs</main>')
-        )
-      );
-
-      const result = await server.fetchFluxDocs(undefined, undefined, 'button');
-
-      assert.match(result.content[0].text, /Button docs/);
-      assert.doesNotMatch(result.content[0].text, /Modal docs/);
-    });
-
     test('serves second identical call from cache (only one fetch)', async () => {
       const fetchSpy = mock.fn(async () => okText(componentFixture));
       const server = buildServer(fetchSpy);
@@ -89,16 +76,6 @@ describe('FluxDocumentationServer integration', () => {
 
       assert.strictEqual(fetchSpy.mock.callCount(), 1);
       assert.deepStrictEqual(second, first);
-    });
-
-    test('different search terms produce distinct cache keys', async () => {
-      const fetchSpy = mock.fn(async () => okText(componentFixture));
-      const server = buildServer(fetchSpy);
-
-      await server.fetchFluxDocs('button', undefined, 'foo');
-      await server.fetchFluxDocs('button', undefined, 'bar');
-
-      assert.strictEqual(fetchSpy.mock.callCount(), 2);
     });
 
     test('rejects with descriptive error on HTTP 404', async () => {
@@ -140,13 +117,18 @@ describe('FluxDocumentationServer integration', () => {
     });
 
     test('caches the listing across calls', async () => {
+      // listFluxComponents now also fetches /pricing (via getProComponents) for
+      // Pro-tier annotation on v2. Both calls are cached via withSingleFlight,
+      // so the second call to listFluxComponents triggers zero new fetches.
       const fetchSpy = mock.fn(async () => okText(componentsListFixture));
       const server = buildServer(fetchSpy);
 
       await server.listFluxComponents();
+      const firstCallCount = fetchSpy.mock.callCount();
+
       await server.listFluxComponents();
 
-      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+      assert.strictEqual(fetchSpy.mock.callCount(), firstCallCount);
     });
 
     test('rejects on HTTP error', async () => {

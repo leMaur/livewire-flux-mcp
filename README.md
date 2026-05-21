@@ -45,18 +45,18 @@ The server provides four MCP tools:
 1. **`fetch_flux_docs`** - Fetches documentation for components or layouts
    - `component` (optional): Specific component name to fetch docs for
    - `layout` (optional): Specific layout name to fetch docs for (e.g., "header", "sidebar")
-   - `search` (optional): Search term to filter content
+   - `version` (optional): Flux major version to target — `'v1'` or `'v2'` (default `'v2'`)
    - Automatically includes reference sections when available
-   - Fetches from `https://fluxui.dev/components/{component}` or `https://fluxui.dev/layouts/{layout}`
+   - Fetches from `https://fluxui.dev/components/{component}` or `https://fluxui.dev/layouts/{layout}` (v2); routes to `https://v1.fluxui.dev/components/{component}` when `version='v1'`
+   - When the page is a paid Flux component, a `[NOTICE] This is a Flux Pro component …` line is prepended to the response
 
 2. **`list_flux_components`** - Lists all available Flux components
-   - No parameters required
-   - Returns components with `https://fluxui.dev/components/` prefix
+   - `version` (optional): `'v1'` or `'v2'` (default `'v2'`)
+   - `tier` (optional): `'free'`, `'pro'`, or `'all'` (default `'all'`). On `'all'`, each component is annotated `[Pro]` or `[Free]`. On v1, the tier argument is ignored (v1 has no Pro tier).
    - Provides component names and their documentation paths
 
 3. **`list_flux_layouts`** - Lists all available Flux layouts
-   - No parameters required
-   - Returns layouts with `https://fluxui.dev/layouts/` prefix
+   - `version` (optional): `'v1'` or `'v2'` (default `'v2'`). On v1 the tool returns a brief "layouts are not available in v1" notice without making any HTTP request.
    - Provides layout names and their documentation paths
 
 4. **`list_flux_component_icons`** - Lists all available Heroicons for flux:icon component
@@ -72,7 +72,6 @@ Once the MCP server is running, AI assistants can use it to:
 
 - Get documentation for a specific component: "Show me the Button component docs"
 - Get documentation for a specific layout: "Show me the header layout docs"
-- Search for content: "Find all components related to forms"
 - List available components: "What Flux components are available?"
 - List available layouts: "What Flux layouts are available?"
 - Browse all available icons: "Show me all Heroicons available for flux:icon"
@@ -80,6 +79,24 @@ Once the MCP server is running, AI assistants can use it to:
 - Get icon usage examples: "How do I use the user icon in solid variant?"
 
 The server automatically fetches the latest documentation from fluxui.dev/components, fluxui.dev/layouts, and Heroicons from GitHub, presenting everything in a structured format for easy consumption by AI assistants. When fetching component or layout documentation, it includes both the main content and the reference section with detailed API information.
+
+### Versions
+
+Flux ships in two major versions, and the MCP server supports both:
+
+- **v2** (default) — the current host at `fluxui.dev`. Used when `version` is omitted or set to `'v2'`. Supports components, layouts, and Pro-tier awareness.
+- **v1** — the legacy host at `v1.fluxui.dev`. Used when `version='v1'`. Components only — Flux v1 has no `/layouts` route and no Pro tier. `list_flux_layouts` returns a friendly notice on v1 without making any HTTP request; `tier` is ignored on `list_flux_components` for v1.
+
+The `version` argument is accepted on `fetch_flux_docs`, `list_flux_components`, and `list_flux_layouts`. `list_flux_component_icons` is version-independent (Heroicons are not part of Flux versioning).
+
+### Pro tier awareness
+
+A subset of Flux v2 components is only available with a paid Flux Pro license. The MCP server surfaces this in two ways:
+
+- **Notice on fetch.** When `fetch_flux_docs` retrieves a component that is Pro, the response is prepended with a single `[NOTICE] This is a Flux Pro component — requires a paid Flux license.` line.
+- **Tier filter on listing.** `list_flux_components` accepts `tier='free'` to hide Pro components, `tier='pro'` to show only Pro ones, or `tier='all'` (default) to list everything with `[Pro]` / `[Free]` annotations next to each name.
+
+The list of Pro components is derived from `fluxui.dev/pricing` with a hardcoded fallback baked into the server, so tier filtering still works correctly if the pricing page is unreachable.
 
 ## Manually Registering the MCP Server
 
@@ -108,13 +125,13 @@ The MCP server includes intelligent caching to provide optimal performance:
 
 - **24-hour cache expiration** - Content is cached for 1 day to balance freshness with performance
 - **Automatic cache management** - Expired entries are automatically cleaned up
-- **Intelligent cache keys** - Different cache entries for different parameters (component, layout, search, variant)
+- **Intelligent cache keys** - Different cache entries for different parameters (component, layout, version, tier, variant)
 - **GitHub API rate limit protection** - Prevents hitting GitHub API limits when fetching Heroicons
 - **Instant responses** - Cached requests return in milliseconds instead of seconds
 
 ### Cache Behavior
 
-- **Documentation requests**: Cached per component/layout and search term combination
+- **Documentation requests**: Cached per component/layout and version combination
 - **Component listings**: Cached globally (refreshed daily)
 - **Layout listings**: Cached globally (refreshed daily)
 - **Icon listings**: Cached per variant and search combination

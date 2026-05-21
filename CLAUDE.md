@@ -18,25 +18,37 @@ This is an MCP (Model Context Protocol) server that provides access to Livewire 
 The project consists of a single main file (`index.js`) that implements:
 
 - **FluxDocumentationServer class**: Main server implementation using MCP SDK
-- **Two MCP tools**:
-  - `fetch_flux_docs`: Fetches documentation for specific components or searches content
-  - `list_flux_components`: Lists all available Flux components from the documentation site
+- **Four MCP tools** (see below)
+- **Version-aware host routing**: `getBaseUrl(version)` returns `https://fluxui.dev` (v2, default) or `https://v1.fluxui.dev` (v1)
+- **Pro-tier awareness**: `getProComponents()` scrapes `fluxui.dev/pricing` with a hardcoded fallback set so the listing's `tier` filter still works offline
 - **Web scraping**: Uses cheerio to parse HTML content from fluxui.dev
 - **Content extraction**: Intelligently extracts documentation content from the website
 
 ## MCP Tools
 
-1. **fetch_flux_docs**: 
+1. **fetch_flux_docs**:
    - Optional `component` parameter for specific component docs
-   - Optional `search` parameter to filter content
-   - Returns formatted documentation text
+   - Optional `layout` parameter for layout docs (e.g. `header`, `sidebar`)
+   - Optional `version` parameter (`'v1' | 'v2'`, default `'v2'`)
+   - Prepends a `[NOTICE]` line when the page is a paid Flux Pro component
 
 2. **list_flux_components**:
-   - No parameters required
-   - Returns list of available components with their paths
+   - Optional `version` parameter (`'v1' | 'v2'`, default `'v2'`)
+   - Optional `tier` parameter (`'free' | 'pro' | 'all'`, default `'all'`). Ignored on v1.
+   - Returns list of available components with their paths, annotated `[Pro]` / `[Free]` on v2
+
+3. **list_flux_layouts**:
+   - Optional `version` parameter (`'v1' | 'v2'`, default `'v2'`)
+   - Returns layouts with names and paths
+   - On v1, returns a "not available" notice without making any HTTP request
+
+4. **list_flux_component_icons**:
+   - Optional `variant` parameter (`outline | solid | mini | micro`)
+   - Optional `search` parameter to filter icon names
+   - Version-independent (Heroicons are not part of Flux versioning)
 
 ## Dependencies
 
 - `@modelcontextprotocol/sdk`: Core MCP functionality
 - `cheerio`: HTML parsing and content extraction
-- `node-fetch`: HTTP requests to documentation site
+- Native `fetch` (Node 20+): HTTP requests to documentation sites

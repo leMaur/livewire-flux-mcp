@@ -2,6 +2,24 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.0 - 2026-05-21
+
+### Added
+
+* `version` argument on `fetch_flux_docs`, `list_flux_components`, and `list_flux_layouts` (`'v1' | 'v2'`, default `'v2'`). `v2` preserves current behavior against `fluxui.dev`; `v1` routes to the legacy `v1.fluxui.dev` host.
+* `tier` argument on `list_flux_components` (`'free' | 'pro' | 'all'`, default `'all'`). Filters the listing by paid tier. On v1, the argument is ignored because Flux v1 had no Pro tier.
+* Pro-component notice prepended to `fetch_flux_docs` output when the fetched page is a paid Flux component (detected via the literal `Flux Pro component` marker on the page).
+* Graceful `Flux layouts are not available in v1` response on `list_flux_layouts` when `version='v1'`; no HTTP request is made in that case.
+
+### Changed
+
+* `list_flux_components` now fetches `/components` instead of `/docs` — more direct, fewer hops.
+* SSRF allowlist on the documentation fetcher widened to `fluxui.dev` + `v1.fluxui.dev`. The Heroicons GitHub allowlist is unchanged.
+
+### Deprecated
+
+* `search` parameter on `fetch_flux_docs` — kept in the schema for backward compatibility with 2.2.x callers but accepted-and-ignored at the handler level. The previous line-based filter returned incoherent fragments; downstream LLMs filter the full document better at the consumer end. Scheduled for removal in 3.0.
+
 ## 2.2.1 - 2026-05-20
 
 ### What's Changed
