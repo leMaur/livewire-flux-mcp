@@ -49,7 +49,22 @@ jobs:
           echo "version=$TAG" >> $GITHUB_OUTPUT
 
       - name: Update package version
-        run: npm version ${{ steps.get-latest-tag.outputs.version }} --no-git-tag-version
+        # Idempotent: if package.json already matches the tag (e.g. a contributor
+        # pre-bumped it in a PR), skip the npm-version call — `npm version $X`
+        # exits 1 with "Version not changed" when X equals the current value,
+        # which previously broke the publish gate on the v2.3.0 release.
+        # See CHANGELOG entry for 2.3.1 for the incident.
+        run: |
+          set -u
+          TARGET="${{ steps.get-latest-tag.outputs.version }}"
+          TARGET="${TARGET#v}"
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" = "$TARGET" ]; then
+            echo "package.json already at $TARGET — skipping npm version"
+          else
+            echo "Bumping package.json from $CURRENT to $TARGET"
+            npm version "$TARGET" --no-git-tag-version
+          fi
 
       - name: Publish package
         run: npm publish --provenance --access public
