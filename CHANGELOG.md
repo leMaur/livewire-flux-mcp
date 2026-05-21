@@ -2,6 +2,18 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.1 - 2026-05-21
+
+Republishes the v2.3.0 contents to npm. The v2.3.0 release (cut earlier today) merged cleanly but the Publish workflow failed at the `Update package version` step: that step ran `npm version 2.3.0 --no-git-tag-version`, and npm exits 1 with `Version not changed` when the value is unchanged. The 2.3.0 PR had pre-bumped `package.json` to `2.3.0`, so the bump-to-same-value tripped the gate and v2.3.0 never reached npm. The v2.3.0 tag is permanently burned by GitHub's Immutable Releases (same surface that burned v2.2.0).
+
+### Fixed
+
+* Publish workflow's `Update package version` step is now idempotent — it reads the current `package.json` version, compares it to the tag, and only invokes `npm version` on mismatch. Future contributors can pre-bump `package.json` in a PR without breaking the publish gate.
+
+### Changed
+
+* `package.json` version field aligned with the workflow's tag-driven contract (no longer pre-bumped in feature PRs).
+
 ## 2.3.0 - 2026-05-21
 
 ### Added
