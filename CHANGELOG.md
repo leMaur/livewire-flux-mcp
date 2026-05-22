@@ -2,6 +2,15 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.2 - 2026-05-22
+
+### What's Changed
+
+* chore(deps): Bump peter-evans/create-pull-request from 7.0.11 to 8.1.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/54
+* chore(deps): Bump lewagon/wait-on-check-action from 1.3.4 to 1.7.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/53
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.3.1...2.3.2
+
 ## 2.3.1 - 2026-05-21
 
 Republishes the v2.3.0 contents to npm. The v2.3.0 release (cut earlier today) merged cleanly but the Publish workflow failed at the `Update package version` step: that step ran `npm version 2.3.0 --no-git-tag-version`, and npm exits 1 with `Version not changed` when the value is unchanged. The 2.3.0 PR had pre-bumped `package.json` to `2.3.0`, so the bump-to-same-value tripped the gate and v2.3.0 never reached npm. The v2.3.0 tag is permanently burned by GitHub's Immutable Releases (same surface that burned v2.2.0).
