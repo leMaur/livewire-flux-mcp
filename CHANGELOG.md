@@ -2,6 +2,19 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.3 - 2026-05-25
+
+### What's Changed
+
+* docs: update CHANGELOG for 2.3.2 by @github-actions[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/55
+* chore(deps): Bump qs from 6.15.1 to 6.15.2 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/56
+
+### New Contributors
+
+* @github-actions[bot] made their first contribution in https://github.com/leMaur/livewire-flux-mcp/pull/55
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.3.2...2.3.3
+
 ## 2.3.2 - 2026-05-22
 
 ### What's Changed
