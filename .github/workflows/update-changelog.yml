@@ -15,19 +15,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6 (resolved 2026-05-20)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
 
       - name: Update Changelog
-        uses: stefanzweifel/changelog-updater-action@a938690fad7edf25368f37e43a1ed1b34303eb36 # v1 (resolved 2026-05-20)
+        uses: stefanzweifel/changelog-updater-action@a938690fad7edf25368f37e43a1ed1b34303eb36 # v1.12.0
         with:
           latest-version: ${{ github.event.release.name }}
           release-notes: ${{ github.event.release.body }}
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v7 (resolved 2026-05-20)
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           commit-message: "docs: update CHANGELOG for ${{ github.event.release.tag_name }}"
           title: "docs: update CHANGELOG for ${{ github.event.release.tag_name }}"
