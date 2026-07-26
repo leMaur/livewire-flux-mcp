@@ -45,6 +45,6 @@
     "cheerio": "^1.2.0"
   },
   "devDependencies": {
-    "npm-check-updates": "^22.2.0"
+    "npm-check-updates": "^23.0.0"
   }
 }
