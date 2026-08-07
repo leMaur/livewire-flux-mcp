@@ -38,6 +38,157 @@ This MCP server scrapes and provides structured access to the Livewire Flux docu
 - Access up-to-date documentation directly from the official Flux website
 - **High-performance caching** with 24-hour expiration for optimal response times
 
+## Set Up Your Agents
+
+The server runs over stdio and is launched with `npx`, so there is nothing to install
+globally. Every agent stores that differently — pick yours below.
+
+<details>
+<summary><b>Cursor</b></summary>
+
+One-click install:
+
+[Add `flux-docs` to Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=flux-docs&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImxpdmV3aXJlLWZsdXgtbWNwIl19)
+
+Or add it by hand to `.cursor/mcp.json` (this project) or `~/.cursor/mcp.json` (every project):
+
+```json
+{
+    "mcpServers": {
+        "flux-docs": {
+            "command": "npx",
+            "args": ["-y", "livewire-flux-mcp"]
+        }
+    }
+}
+```
+
+Cursor has no `cursor mcp add` command — the deeplink and the config file are the two supported routes.
+
+</details>
+
+<details>
+<summary><b>Claude Code</b></summary>
+
+```shell
+claude mcp add --transport stdio --scope project flux-docs -- npx -y livewire-flux-mcp
+```
+
+Everything after `--` is passed to the server verbatim. `--scope project` writes `.mcp.json`
+in the project root so the whole team gets it:
+
+```json
+{
+    "mcpServers": {
+        "flux-docs": {
+            "command": "npx",
+            "args": ["-y", "livewire-flux-mcp"]
+        }
+    }
+}
+```
+
+Use `--scope local` (the default) to keep it to yourself, or `--scope user` for every project.
+A project-scoped server needs approving the first time you open the project. On Windows, wrap
+the command: `-- cmd /c npx -y livewire-flux-mcp`.
+
+</details>
+
+<details>
+<summary><b>Codex</b></summary>
+
+```shell
+codex mcp add flux-docs -- npx -y livewire-flux-mcp
+```
+
+This writes to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.flux-docs]
+command = "npx"
+args = ["-y", "livewire-flux-mcp"]
+```
+
+A project-level `.codex/config.toml` is only read once you have trusted the project.
+Verify with `codex mcp list`.
+
+</details>
+
+<details>
+<summary><b>Gemini CLI</b></summary>
+
+```shell
+gemini mcp add --scope project flux-docs npx -y livewire-flux-mcp
+```
+
+Note there is no `--` separator: the command and its arguments follow the server name
+directly. This writes `.gemini/settings.json` (use `--scope user` for `~/.gemini/settings.json`):
+
+```json
+{
+    "mcpServers": {
+        "flux-docs": {
+            "command": "npx",
+            "args": ["-y", "livewire-flux-mcp"]
+        }
+    }
+}
+```
+
+`gemini mcp list` reports the server as disconnected until the folder is trusted.
+
+</details>
+
+<details>
+<summary><b>GitHub Copilot (VS Code)</b></summary>
+
+Create `.vscode/mcp.json`. Copilot uses `servers`, not `mcpServers`, and each entry declares its type:
+
+```json
+{
+    "servers": {
+        "flux-docs": {
+            "type": "stdio",
+            "command": "npx",
+            "args": ["-y", "livewire-flux-mcp"]
+        }
+    }
+}
+```
+
+Or run **MCP: Add Server** from the command palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) and choose
+the Workspace scope. The CLI equivalent writes to your user profile rather than the workspace:
+
+```shell
+code --add-mcp '{"name":"flux-docs","command":"npx","args":["-y","livewire-flux-mcp"]}'
+```
+
+Requires VS Code 1.102+ with GitHub Copilot Chat enabled.
+
+</details>
+
+<details>
+<summary><b>Junie</b></summary>
+
+Open **Settings → Tools → Junie → MCP Settings** and add the server, or edit
+`.junie/mcp/mcp.json` in the project (`~/.junie/mcp/mcp.json` for every project) directly:
+
+```json
+{
+    "mcpServers": {
+        "flux-docs": {
+            "command": "npx",
+            "args": ["-y", "livewire-flux-mcp"]
+        }
+    }
+}
+```
+
+Junie registers MCP servers by editing JSON — there is no CLI command. Project-level servers
+are ignored in untrusted projects.
+
+</details>
+
 ## Available MCP Tools
 
 The server provides four MCP tools:
@@ -100,12 +251,12 @@ The list of Pro components is derived from `fluxui.dev/pricing` with a hardcoded
 
 ## Manually Registering the MCP Server
 
-Sometimes you may need to manually register the Livewire Flux MCP server with your editor of choice. 
-You should register the MCP server using the following details:
+If your editor is not one of the six covered in [Set Up Your Agents](#set-up-your-agents), register
+the server manually using the following details:
 
 <table>
 <tr><td><strong>Command</strong></td><td><code>npx</code></td></tr>
-<tr><td><strong>Args</strong></td><td><code>livewire-flux-mcp</code></td></tr>
+<tr><td><strong>Args</strong></td><td><code>-y livewire-flux-mcp</code></td></tr>
 </table>
 
 ```json
@@ -113,11 +264,13 @@ You should register the MCP server using the following details:
     "mcpServers": {
         "flux-docs": {
             "command": "npx",
-            "args": ["livewire-flux-mcp"]
+            "args": ["-y", "livewire-flux-mcp"]
         }
     }
 }
 ```
+
+`-y` skips the install confirmation on first launch, which a stdio server cannot answer.
 
 ## Performance & Caching
 
