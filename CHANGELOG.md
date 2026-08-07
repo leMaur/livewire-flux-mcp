@@ -2,6 +2,21 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.5 - 2026-08-07
+
+Metadata and documentation release. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.4.
+
+### Added
+
+- `server.json` manifest and an `mcpName` field, so the package can be listed in the official MCP Registry.
+- A "Why not just Laravel Boost?" section in the README, covering what this server does that Boost's `search-docs` does not: it fetches the single component page the agent asked for instead of searching a corpus, and it reads the Flux Pro tier live so the agent stops writing markup that needs a paid license.
+
+### Changed
+
+- The package description now states what the server does for a Flux project rather than which category it belongs to.
+- npm keywords expanded from 4 to 14, so the package surfaces for Laravel, Boost and MCP searches.
+- The sponsorship section moved from the top of the README down below the setup and guidelines sections.
+
 ## 2.3.4 - 2026-08-07
 
 ### What's Changed
