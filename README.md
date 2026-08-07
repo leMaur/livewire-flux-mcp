@@ -189,6 +189,42 @@ are ignored in untrusted projects.
 
 </details>
 
+## AI Guidelines & Skills
+
+Registering the server tells your agent the tools *exist*. It does not tell it *when to reach
+for them* — and in a Laravel Boost project it actively will not, because Boost ships a
+`fluxui-development` skill that sends Flux lookups to its own `search-docs` tool and carries a
+hardcoded component list. This package ships guidance that fixes that:
+
+```shell
+npx livewire-flux-mcp install
+```
+
+| File | What it is |
+| --- | --- |
+| `.ai/skills/fluxui-development/SKILL.md` | On-demand skill: the Flux workflow, driven by this server's tools. **Replaces Boost's bundled skill of the same name.** |
+| `.ai/guidelines/fluxui-{free,pro}/core.blade.php` | Always-loaded guideline establishing that Flux questions are resolved through `flux-docs`. |
+| `.claude/agents/flux-ui-builder.md` | A Claude Code subagent that builds Flux interfaces and looks every component up before writing markup. |
+
+The installer detects what applies: `livewire/flux-pro` in `composer.json` selects the `fluxui-pro`
+guideline key, `livewire/flux` selects `fluxui-free`, and a `.claude/` directory adds the subagent.
+Restrict it with `--boost` or `--claude`, point it elsewhere with `--path <dir>`, or preview with
+`--dry-run`. Afterwards run `php artisan boost:update` so Boost picks the files up.
+
+**On overwriting.** The skill is a deliberate replacement — Boost resolves custom skills last and
+keys them on the frontmatter `name`, so `fluxui-development` has to match for the override to
+land. The guideline is never clobbered: an existing file at that path, or the guideline shipped
+inside the Flux package itself, is preserved below our block, which is delimited by
+`{{-- livewire-flux-mcp:begin --}}` markers so re-running only refreshes that section. Any file
+the installer did not write is left alone unless you pass `--force`.
+
+To undo, delete the installed files and run `php artisan boost:update` — Boost restores its own
+versions.
+
+> Laravel Boost only auto-discovers guidelines and skills from Composer packages, so an npm
+> package cannot register them automatically. This installer writes to the paths Boost documents
+> for custom guidelines and skills, which is why it works and survives `boost:update`.
+
 ## Available MCP Tools
 
 The server provides four MCP tools:

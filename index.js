@@ -765,6 +765,13 @@ const invokedAsMain =
   import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
 
 if (invokedAsMain) {
-  const server = new FluxDocumentationServer();
-  server.run().catch(console.error);
+  // Only `install` is special-cased. Anything else starts the stdio server, so an MCP
+  // client passing unexpected arguments still gets a working server rather than a CLI error.
+  if (process.argv[2] === 'install') {
+    const { runInstall } = await import('./install.js');
+    process.exitCode = runInstall(process.argv.slice(3));
+  } else {
+    const server = new FluxDocumentationServer();
+    server.run().catch(console.error);
+  }
 }
