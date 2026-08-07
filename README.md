@@ -58,6 +58,7 @@ The server provides four MCP tools:
 3. **`list_flux_layouts`** - Lists all available Flux layouts
    - `version` (optional): `'v1'` or `'v2'` (default `'v2'`). On v1 the tool returns a brief "layouts are not available in v1" notice without making any HTTP request.
    - Provides layout names and their documentation paths
+   - Layout names are read from `fluxui.dev/layouts`, falling back to the site-wide navigation on `fluxui.dev/components` when that index is unavailable — the individual `/layouts/{name}` pages are unaffected either way
 
 4. **`list_flux_component_icons`** - Lists all available Heroicons for flux:icon component
    - `variant` (optional): Filter by icon variant (`outline`, `solid`, `mini`, `micro`)

@@ -157,6 +157,93 @@ describe('FluxDocumentationServer integration', () => {
       assert.match(result.content[0].text, /Header/);
       assert.match(result.content[0].text, /Sidebar/);
     });
+
+    test('does not hit the fallback when the index works', async () => {
+      const fetchSpy = mock.fn(async () =>
+        okText('<a href="/layouts/header">Header</a>')
+      );
+      const server = buildServer(fetchSpy);
+
+      await server.listFluxLayouts();
+
+      assert.strictEqual(fetchSpy.mock.callCount(), 1);
+    });
+
+    // fluxui.dev/layouts started returning 404 while /layouts/{name} kept working.
+    // Layout links live in the site-wide nav, so any responding page can supply them.
+    test('falls back to the components page when the index 404s', async () => {
+      const fetchSpy = mock.fn(async (url) =>
+        url === 'https://fluxui.dev/layouts'
+          ? httpError(404)
+          : okText(
+            '<a href="/layouts/header">Header</a>' +
+            '<a href="/layouts/sidebar">Sidebar</a>'
+          )
+      );
+      const server = buildServer(fetchSpy);
+
+      const result = await server.listFluxLayouts();
+
+      assert.deepStrictEqual(
+        fetchSpy.mock.calls.map((call) => call.arguments[0]),
+        ['https://fluxui.dev/layouts', 'https://fluxui.dev/components']
+      );
+      assert.match(result.content[0].text, /- Header \(header\)/);
+      assert.match(result.content[0].text, /- Sidebar \(sidebar\)/);
+    });
+
+    test('falls back when the index responds but carries no layout links', async () => {
+      const fetchSpy = mock.fn(async (url) =>
+        url === 'https://fluxui.dev/layouts'
+          ? okText('<a href="/components/button">Button</a>')
+          : okText('<a href="/layouts/sidebar">Sidebar</a>')
+      );
+      const server = buildServer(fetchSpy);
+
+      const result = await server.listFluxLayouts();
+
+      assert.strictEqual(fetchSpy.mock.callCount(), 2);
+      assert.match(result.content[0].text, /Sidebar/);
+    });
+
+    test('keeps only the layout name when the nav anchor carries a description', async () => {
+      const fetchSpy = mock.fn(async () =>
+        okText(
+          '<a href="/layouts/sidebar">Sidebar \n\n  \n\n Create primary or secondary navigation sidebars</a>'
+        )
+      );
+      const server = buildServer(fetchSpy);
+
+      const result = await server.listFluxLayouts();
+
+      assert.match(result.content[0].text, /- Sidebar \(sidebar\)/);
+      assert.ok(!result.content[0].text.includes('Create primary'));
+    });
+
+    test('ignores query strings, fragments and trailing slashes when deduping', async () => {
+      const fetchSpy = mock.fn(async () =>
+        okText(
+          '<a href="/layouts/header">Header</a>' +
+          '<a href="/layouts/header/">Header again</a>' +
+          '<a href="/layouts/header#reference">Header anchor</a>' +
+          '<a href="/layouts/header?x=1">Header query</a>'
+        )
+      );
+      const server = buildServer(fetchSpy);
+
+      const result = await server.listFluxLayouts();
+
+      assert.strictEqual((result.content[0].text.match(/^- /gm) ?? []).length, 1);
+    });
+
+    test('reports a clear error when neither source yields layouts', async () => {
+      const server = buildServer(mock.fn(async () => httpError(404)));
+
+      await assert.rejects(
+        () => server.listFluxLayouts(),
+        /No layouts found \(layout index returned HTTP 404\)/
+      );
+    });
   });
 
   describe('listFluxComponentIcons', () => {

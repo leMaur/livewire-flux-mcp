@@ -80,6 +80,47 @@ export function getBaseUrl(version) {
   return version === 'v1' ? 'https://v1.fluxui.dev' : 'https://fluxui.dev';
 }
 
+// Anchor text in the site nav sometimes carries a description on following lines
+// ("Sidebar\n\nCreate primary or secondary navigation sidebars"). Keep the first
+// non-empty line, which is the name.
+function normalizeLinkLabel(text) {
+  const firstLine = text
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  return (firstLine ?? '').replace(/\s+/g, ' ').trim();
+}
+
+// Pull `/layouts/{name}` links out of any Flux page. Layout links live in the global
+// nav, so any page carries them — which is what makes the fallback below possible.
+function parseLayoutLinks(html, baseUrl) {
+  const $ = cheerio.load(html);
+  const absolutePrefix = `${baseUrl}/layouts/`;
+  const links = [];
+
+  $('a').each((i, el) => {
+    const href = $(el).attr('href');
+    if (!href) return;
+
+    let path = null;
+    if (href.startsWith(absolutePrefix)) {
+      path = href.slice(absolutePrefix.length);
+    } else if (href.startsWith('/layouts/')) {
+      path = href.slice('/layouts/'.length);
+    }
+    if (!path) return;
+
+    path = path.split(/[#?]/)[0].replace(/\/+$/, '');
+    const name = normalizeLinkLabel($(el).text());
+    if (!path || !name || links.some((link) => link.path === path)) return;
+
+    links.push({ name, href, path });
+  });
+
+  return links;
+}
+
 function formatFluxComponentLabel(slug) {
   return slug
     .split('-')
@@ -545,6 +586,41 @@ export class FluxDocumentationServer {
     });
   }
 
+  // `fluxui.dev/layouts` was an index page listing every layout. It now 404s, while the
+  // individual `/layouts/{name}` pages still resolve — so scraping the index alone leaves
+  // the tool permanently broken. Layout links also appear in the site-wide nav rendered on
+  // every page, so fall back to a page that is known to respond. The index is still tried
+  // first, which means this repairs itself if Flux brings it back.
+  async collectLayoutLinks(baseUrl) {
+    const sources = [`${baseUrl}/layouts`, `${baseUrl}/components`];
+    let lastStatus = null;
+
+    for (const url of sources) {
+      const response = await this.fetchWithTimeout(url, { allowedHosts: FLUX_ALLOWED_HOSTS });
+
+      if (!response.ok) {
+        lastStatus = response.status;
+        continue;
+      }
+
+      const html = await response.text();
+      if (typeof html !== 'string') {
+        throw new Error(`Invalid HTML response body for ${url}`);
+      }
+
+      const links = parseLayoutLinks(html, baseUrl);
+      if (links.length > 0) {
+        return links;
+      }
+    }
+
+    throw new Error(
+      lastStatus === null
+        ? 'No layouts found on the Flux documentation site'
+        : `No layouts found (layout index returned HTTP ${lastStatus})`
+    );
+  }
+
   async listFluxLayouts(version) {
     try {
       if (version === 'v1') {
@@ -555,41 +631,10 @@ export class FluxDocumentationServer {
 
       const normalizedVersion = version || 'v2';
       const baseUrl = getBaseUrl(version);
-      const layoutPrefix = `${baseUrl}/layouts/`;
       const cacheKey = `layouts:${CACHE_SCHEMA_VERSION}:${normalizedVersion}`;
 
       return await this.withSingleFlight(cacheKey, async () => {
-        const response = await this.fetchWithTimeout(`${baseUrl}/layouts`, { allowedHosts: FLUX_ALLOWED_HOSTS });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const html = await response.text();
-        if (typeof html !== 'string') {
-          throw new Error(`Invalid HTML response body for ${baseUrl}/layouts`);
-        }
-
-        const $ = cheerio.load(html);
-        const links = [];
-        $('a').each((i, el) => {
-          const href = $(el).attr('href');
-          const text = $(el).text().trim();
-          let path = null;
-
-          if (href && href.startsWith(layoutPrefix)) {
-            path = href.slice(layoutPrefix.length);
-          } else if (href && href.startsWith('/layouts/')) {
-            path = href.slice('/layouts/'.length);
-          }
-
-          if (href && text && path && !links.some(link => link.path === path)) {
-            links.push({
-              name: text,
-              href,
-              path,
-            });
-          }
-        });
+        const links = await this.collectLayoutLinks(baseUrl);
 
         const layoutsList = links
           .map(link => `- ${link.name} (${link.path})`)

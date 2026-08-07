@@ -41,6 +41,10 @@ The project consists of a single main file (`index.js`) that implements:
    - Optional `version` parameter (`'v1' | 'v2'`, default `'v2'`)
    - Returns layouts with names and paths
    - On v1, returns a "not available" notice without making any HTTP request
+   - Sources names via `collectLayoutLinks()`: tries `/layouts` first, then falls back to
+     `/components`. The `/layouts` index 404s upstream as of 2026-08 while `/layouts/{name}`
+     still resolves, and layout links appear in the site-wide nav on every page. Keeping the
+     index first means the tool repairs itself if Flux restores it.
 
 4. **list_flux_component_icons**:
    - Optional `variant` parameter (`outline | solid | mini | micro`)
