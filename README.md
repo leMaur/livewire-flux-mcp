@@ -12,19 +12,6 @@ An MCP (Model Context Protocol) server that provides access to Livewire Flux Com
 > 
 > This is a personal project and is not affiliated with Livewire Flux.
 
-## Support Me
-
-Hey folks,
-
-Do you like this package? Do you find it useful, and it fits well in your project?
-
-I am glad to help you, and I would be so grateful if you considered supporting my work.
-
-You can even choose 😃:
-* You can [sponsor me 😎](https://github.com/sponsors/leMaur)
-* You can [buy me a coffee ☕ or a pizza 🍕](https://github.com/sponsors/leMaur?frequency=one-time&sponsor=leMaur)
-* You can "Star ⭐" this repository (it's free BTW 😉)
-
 ## What it does
 
 This MCP server scrapes and provides structured access to the Livewire Flux documentation, enabling AI assistants to:
@@ -37,6 +24,22 @@ This MCP server scrapes and provides structured access to the Livewire Flux docu
 - Browse and search all available Heroicons for use with flux:icon component
 - Access up-to-date documentation directly from the official Flux website
 - **High-performance caching** with 24-hour expiration for optimal response times
+
+## Why not just Laravel Boost?
+
+Boost already indexes Flux through its `search-docs` tool, and for a lot of questions that is
+enough. Two things it does not do:
+
+- **Scoped answers.** `search-docs` is a semantic search over a 17k-document corpus, so a broad Flux
+  question can come back as a several-thousand-token dump ([laravel/boost#290](https://github.com/laravel/boost/issues/290)).
+  This server fetches the one component page you asked for, plus its reference section.
+- **Pro-tier awareness.** Boost's bundled `fluxui-development` skill carries a hardcoded component
+  list and does not tell your agent which components need a paid Flux license. This server reads the
+  tier live and flags it, so your agent stops writing markup you cannot ship.
+
+If you are on Boost, `npx livewire-flux-mcp install` wires both together — see
+[AI Guidelines & Skills](#ai-guidelines--skills). The two are complementary: keep Boost for
+Laravel, Livewire, Pest and the rest; let this server answer Flux.
 
 ## Set Up Your Agents
 
@@ -224,6 +227,19 @@ versions.
 > Laravel Boost only auto-discovers guidelines and skills from Composer packages, so an npm
 > package cannot register them automatically. This installer writes to the paths Boost documents
 > for custom guidelines and skills, which is why it works and survives `boost:update`.
+
+## Support Me
+
+Hey folks,
+
+Do you like this package? Do you find it useful, and it fits well in your project?
+
+I am glad to help you, and I would be so grateful if you considered supporting my work.
+
+You can even choose 😃:
+* You can [sponsor me 😎](https://github.com/sponsors/leMaur)
+* You can [buy me a coffee ☕ or a pizza 🍕](https://github.com/sponsors/leMaur?frequency=one-time&sponsor=leMaur)
+* You can "Star ⭐" this repository (it's free BTW 😉)
 
 ## Available MCP Tools
 
