@@ -32,6 +32,8 @@
   "homepage": "https://github.com/leMaur/livewire-flux-mcp#readme",
   "files": [
     "index.js",
+    "install.js",
+    "resources",
     "README.md",
     "LICENSE.md",
     "SECURITY.md",
