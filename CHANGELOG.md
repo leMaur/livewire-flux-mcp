@@ -2,6 +2,15 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.6 - 2026-08-07
+
+Metadata fix for the official MCP Registry listing. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.5.
+
+### Fixed
+
+- The MCP Registry namespace is case-sensitive and grants publish permission for `io.github.leMaur/*`, matching the GitHub account casing. `mcp-publisher init` lowercases the owner when it generates `server.json`, which produced `io.github.lemaur/*` and a 403 on publish. Both the `server.json` name and the package `mcpName` now use `io.github.leMaur`, and they match byte for byte, which the registry also requires when it validates the published npm tarball against the manifest.
+- Shortened the `server.json` description to 93 characters, since the registry caps that field at 100. The npm description is a separate field and is unchanged.
+
 ## 2.3.5 - 2026-08-07
 
 Metadata and documentation release. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.4.
