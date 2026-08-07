@@ -2,6 +2,33 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.4 - 2026-08-07
+
+### What's Changed
+
+* docs: update CHANGELOG for 2.3.3 by @github-actions[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/57
+* chore(deps-dev): Bump npm-check-updates from 22.2.0 to 22.2.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/58
+* chore(deps): Bump hono from 4.12.18 to 4.12.23 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/59
+* chore(deps): Bump actions/checkout from 6.0.2 to 6.0.3 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/60
+* chore(deps-dev): Bump npm-check-updates from 22.2.1 to 22.2.2 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/61
+* chore(deps): Bump lewagon/wait-on-check-action from 1.7.0 to 1.8.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/62
+* chore(deps-dev): Bump npm-check-updates from 22.2.2 to 22.2.3 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/63
+* ci: set persist-credentials: false on checkout steps by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/64
+* chore(deps): Bump the npm_and_yarn group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/65
+* chore(deps): Bump actions/checkout from 6.0.3 to 7.0.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/66
+* chore(deps-dev): Bump npm-check-updates from 22.2.3 to 22.2.7 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/67
+* chore(deps): Bump lewagon/wait-on-check-action from 1.8.0 to 1.8.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/68
+* chore(deps): Bump body-parser from 2.2.2 to 2.3.0 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/71
+* chore(deps): Bump the npm_and_yarn group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/72
+* chore(deps): Bump actions/checkout from 7.0.0 to 7.0.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/73
+* chore(deps): Bump @modelcontextprotocol/sdk from 1.29.0 to 1.30.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/74
+* chore(deps): Bump ip-address from 10.2.0 to 10.4.0 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/75
+* fix: source layout names from the site nav when /layouts 404s by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/76
+* docs: add per-agent MCP setup instructions by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/77
+* feat: ship Flux AI guideline, skill and subagent with an installer by @leMaur in https://github.com/leMaur/livewire-flux-mcp/pull/78
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.3.3...2.3.4
+
 ## 2.3.3 - 2026-05-25
 
 ### What's Changed
