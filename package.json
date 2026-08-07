@@ -1,7 +1,7 @@
 {
   "name": "livewire-flux-mcp",
   "version": "2.2.1",
-  "mcpName": "io.github.lemaur/livewire-flux-mcp",
+  "mcpName": "io.github.leMaur/livewire-flux-mcp",
   "description": "Flux UI docs for your AI coding assistant. Live from fluxui.dev, Pro-tier aware, Laravel Boost compatible.",
   "main": "index.js",
   "type": "module",
