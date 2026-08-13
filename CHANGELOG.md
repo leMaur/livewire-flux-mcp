@@ -2,6 +2,14 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.7 - 2026-08-13
+
+Maintainer metadata refresh. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.6.
+
+### Changed
+
+- Refreshed the published package maintainer contact address to `hello@lemaur.me`. The npm registry stamps maintainer details into each published version, so a release is the only way to update what the registry serves.
+
 ## 2.3.6 - 2026-08-07
 
 Metadata fix for the official MCP Registry listing. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.5.
