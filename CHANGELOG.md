@@ -2,6 +2,18 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.8 - 2026-09-07
+
+### What's Changed
+
+* docs: update CHANGELOG for 2.3.7 by @github-actions[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/82
+* chore(deps): Bump lewagon/wait-on-check-action from 1.9.0 to 1.9.1 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/83
+* chore(deps-dev): Bump npm-check-updates from 23.0.1 to 23.1.0 by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/85
+* chore(deps): Bump fast-uri from 3.1.5 to 3.1.7 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/86
+* chore(deps): Bump qs from 6.15.3 to 6.16.0 in the npm_and_yarn group across 1 directory by @dependabot[bot] in https://github.com/leMaur/livewire-flux-mcp/pull/87
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.3.7...2.3.8
+
 ## 2.3.7 - 2026-08-13
 
 Maintainer metadata refresh. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.6.
