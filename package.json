@@ -54,10 +54,10 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "cheerio": "^1.2.0"
   },
   "devDependencies": {
-    "npm-check-updates": "^23.0.0"
+    "npm-check-updates": "^23.1.1"
   }
 }
