@@ -2,6 +2,21 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.9 - 2026-10-21
+
+Security maintenance release. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.8.
+
+### Security
+
+- Raised the minimum `@modelcontextprotocol/sdk` version to `^1.32.1`. Versions up to 1.31.0 are affected by several SDK advisories, so a fresh install could previously still resolve one of them.
+- Updated the locked transitive dependencies: `proxy-addr` 2.0.8 (GHSA-jqcg-44mw-7w3h) and `hono` 4.13.13 (GHSA-5r4p-p66f-jhc7). This server runs over stdio and never loads either module at runtime.
+
+### Changed
+
+- Bumped `npm-check-updates` to 23.1.1 and `actions/setup-node` to 7.1.0.
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.3.8...2.3.9
+
 ## 2.3.8 - 2026-09-07
 
 ### What's Changed
