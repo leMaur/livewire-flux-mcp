@@ -2,6 +2,17 @@
 
 All notable changes to `livewire-flux-mcp` will be documented in this file.
 
+## 2.3.10 - 2026-11-03
+
+Security maintenance release. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.9.
+
+### Security
+
+- Updated the locked transitive dependencies: `undici` 7.30.1 (GHSA-2m5v-pch6-74hx, GHSA-qrxm-fqhp-jwvm, GHSA-4w7w-5xrc-9h26, GHSA-xjj6-f33q-929c, GHSA-9fm3-97px-rjf6, GHSA-55wc-3pg8-jfw6, GHSA-f72v-6w45-q472), `zod` 4.6.7 (GHSA-mrhx-c7xc-m3w5), `fast-uri` 3.1.9 (GHSA-w74x-v6f9-j3xg, GHSA-wjr9-j795-jxcr, GHSA-xhq7-xmqj-769h, GHSA-333x-w4r6-6crp), `body-parser` 2.4.0 (GHSA-27r3-jxmh-p828) and `@hono/node-server` 2.1.6 (GHSA-rmxm-3fg6-px4f). This server runs over stdio and never loads the HTTP transports at runtime.
+- Raised the minimum `@modelcontextprotocol/sdk` version to `^1.32.2`.
+
+**Full Changelog**: https://github.com/leMaur/livewire-flux-mcp/compare/2.3.9...2.3.10
+
 ## 2.3.9 - 2026-10-21
 
 Security maintenance release. No functional changes: the four MCP tools, their signatures, and their behaviour are identical to 2.3.8.
